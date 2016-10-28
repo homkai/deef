@@ -8,7 +8,6 @@ import handleActions from 'redux-actions/lib/handleActions';
 import isPlainObject from 'is-plain-object';
 import invariant from 'invariant';
 import warning from 'warning';
-import window from 'global/window';
 import Event from './event';
 
 const SEP = '/';
@@ -17,6 +16,7 @@ const routingTypes = {push, replace, go, goBack, goForward};
 
 export default function createDeef(createOpts) {
     const {
+        window,
         mobile,
         initialReducer,
         defaultHistory,

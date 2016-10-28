@@ -4,9 +4,11 @@ import {
     syncHistoryWithStore,
     routerReducer as routing
 } from 'react-router-redux';
+// import window from 'global/window';
 import createDeef from './createDeef';
 
 export default createDeef({
+    window,
     initialReducer: {
         routing
     },

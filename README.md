@@ -4,10 +4,13 @@
 代码分为Model、Component、Processors
 
 Model -> Component -> Processors -> Model -> ...
+
 状态（Model）决定展现（Component），交互就是改状态（Processors）
 
 ## Model
 Model是最最纯粹的那种model，存数据（state），以及改数据的方法（reducers）
+
+Model处理数据，与具体业务无关
 
 ```js
     const Model = {
@@ -34,6 +37,8 @@ Component 是 无状态函数式组件（stateless functional component），pro
 组件化开发，从root component到n级业务组件都拿这种组件堆叠
 
 root component不用react-router的那种router component，统一用M C P
+
+Component与状态和交互处理解耦，是可以复用的
 
 ```js
     const Component = ({num, processors}) => <div>
