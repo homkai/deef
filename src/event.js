@@ -5,8 +5,9 @@ class Event {
     constructor() {
         this.hooks = {
             error: [],
-            stateChange: [],
+            history: [],
             action: [],
+            stateChange: [],
             hmr: []
         };
     }

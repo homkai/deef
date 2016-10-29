@@ -1,9 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { createStore, applyMiddleware, compose, combineReducers } from 'redux';
-import { Provider, connect as reduxConnect } from 'react-redux';
-import { Router, Route } from 'react-router';
-import {push, replace, go, goBack, goForward} from 'react-router-redux';
+import {createStore, applyMiddleware, compose, combineReducers} from 'redux';
+import {Provider, connect as reduxConnect} from 'react-redux';
 import handleActions from 'redux-actions/lib/handleActions';
 import isPlainObject from 'is-plain-object';
 import invariant from 'invariant';
@@ -12,40 +10,67 @@ import Event from './event';
 
 const SEP = '/';
 
-const routingTypes = {push, replace, go, goBack, goForward};
+const historyNamespace = 'history';
 
 export default function createDeef(createOpts) {
     const {
         window,
-        mobile,
-        initialReducer,
-        defaultHistory,
-        routerMiddleware,
-        setupHistory
+        defaultHistory
     } = createOpts;
 
     /**
      * Create a deef instance.
      */
     return function deef(opts = {}) {
-        const initialState = opts.initialState || {};
-        const reducerEnhancer = opts.reducerEnhancer || (reducers => reducers);
-
-        const history = defaultHistory;
+        const {
+            initialReducer = {},
+            initialState = {},
+            reducerEnhancer = (reducers => reducers),
+            history = defaultHistory
+        } = opts;
 
         const event = new Event();
 
+        let historyActionTypes = {};
+        {
+            const {listen, push, replace, go, goBack, goForward} = history;
+            invariant(
+                listen && push && replace && go && goBack && goForward,
+                `app.deef(): history must have "listen, push, replace, go, goBack, goForward" methods`
+            );
+            historyActionTypes = {push, replace, go, goBack, goForward};
+
+            history.listen((...args) => {
+                event.trigger('history', args);
+            });
+        }
+
+        // error wrapper
+        event.on('error', function(err) {
+            throw new Error(err.stack || err);
+        });
+        const onError = (err) => {
+            if (err) {
+                if (typeof err === 'string') err = new Error(err);
+                event.trigger('error', [err]);
+            }
+        };
+
         const app = {
-            // properties
+            // private properties
             _models: [],
             _store: null,
-            _history: null,
             // methods
             model,
             start,
-            connect
+            connect,
+            // not recommended
+            _history: history,
+            _dispatch: dispatch,
+            _on: on
         };
         return app;
+
 
         ////////////////////////////////////
         // Methods
@@ -56,11 +81,11 @@ export default function createDeef(createOpts) {
          * @param model
          */
         function model(model) {
-            this._models.push(checkModel(model, mobile));
+            this._models.push(checkModel(model));
         }
 
         // inject model dynamically
-        function injectModel(createReducer, onError, m) {
+        function injectModel(createReducer, m) {
             if (m.namespace) {
                 const hasExisted = this._models.some(model =>
                     model.namespace === m.namespace
@@ -69,13 +94,13 @@ export default function createDeef(createOpts) {
                     return;
                 }
             }
-            m = checkModel(m, mobile);
+            m = checkModel(m);
             this._models.push(m);
             const store = this._store;
 
             // reducers
-            store.asyncReducers[m.namespace] = getReducer(m.reducers, m.state);
-            store.replaceReducer(createReducer(store.asyncReducers));
+            store.additionalReducers[m.namespace] = getReducer(m.reducers, m.state);
+            store.replaceReducer(createReducer(store.additionalReducers));
         }
 
         /**
@@ -83,9 +108,9 @@ export default function createDeef(createOpts) {
          * arguments, it will return a function that return JSX elements.
          *
          * @param container selector | HTMLElement
-         * @param rootComponent Component
+         * @param RootComponent Component
          */
-        function start(container, rootComponent) {
+        function start(container, RootComponent) {
             // support selector
             if (typeof container === 'string') {
                 container = document.querySelector(container);
@@ -94,23 +119,9 @@ export default function createDeef(createOpts) {
 
             invariant(!container || isHTMLElement(container), 'app.start: container should be HTMLElement');
 
-            // error wrapper
-            event.on('error', function(err) {
-                throw new Error(err.stack || err);
-            });
-            const onErrorWrapper = (err) => {
-                if (err) {
-                    if (typeof err === 'string') err = new Error(err);
-                    event.trigger('error', [err]);
-                }
-            };
-
-            // get reducers and sagas from model
-            let sagas = [];
             let reducers = { ...initialReducer };
             for (let m of this._models) {
                 reducers[m.namespace] = getReducer(m.reducers, m.state);
-                if (m.effects) sagas.push(getSaga(m.effects, m, onErrorWrapper));
             }
 
             let middlewares = [
@@ -119,9 +130,6 @@ export default function createDeef(createOpts) {
                     return next(action);
                 }
             ];
-            if (routerMiddleware) {
-                middlewares = [routerMiddleware(history), ...middlewares];
-            }
             const devtools = window.devToolsExtension || (() => noop => noop);
             const enhancers = [
                 applyMiddleware(...middlewares),
@@ -133,106 +141,122 @@ export default function createDeef(createOpts) {
                 compose(...enhancers)
             );
 
-            function createReducer(asyncReducers) {
+            function createReducer(additionalReducers = {}) {
                 return reducerEnhancer(combineReducers({
                     ...reducers,
-                    ...asyncReducers,
+                    ...additionalReducers
                 }));
             }
 
-            store.asyncReducers = {};
+            store.additionalReducers = {};
 
             store.subscribe(() => event.trigger('stateChange'));
 
-            // setup history
-            if (setupHistory) setupHistory.call(this, history);
-
             // inject model after start
-            this.model = injectModel.bind(this, createReducer, onErrorWrapper);
+            this.model = injectModel.bind(this, createReducer);
 
             // If has container, render; else, return react component
             if (container) {
-                render(container, store, this, rootComponent);
-                event.trigger('hmr', render.bind(this, container, store, this));
+                render(container, RootComponent, store);
+                event.trigger('hmr', [render.bind(this, container, store, this)]);
+                setTimeout(() => {
+                    event.trigger('history', [history.location, history.action]);
+                }, 0);
             } else {
-                return getProvider(store, this, rootComponent);
+                return getProvider(RootComponent, store);
             }
         }
 
         function connect(mapStateToProps, processors, Component, options) {
+            mapStateToProps = mapStateToProps || (() => ({}));
+            processors = processors || {};
             const getProcessorArgs = () => {
                 return {
-                    dispatch: dispatch,
                     getState: app._store.getState,
-                    history: app._history,
-                    on: event.on.bind(event)
+                    dispatch,
+                    on
                 };
             };
-            return reduxConnect((state, ownProps) => {
-                const props = mapStateToProps(state, ownProps);
-                invariant(
-                    props.processors === undefined,
-                    'app.connect: mapStateToProps should not return key "processors"'
-                );
-                return props;
-            }, () => {
-                const _subscriptions = [];
-                const _processors = {};
-                processors && Object.keys(processors).map((key) => {
-                    if (!isNaN(key)) {
-                        _subscriptions.push(processors[key]);
+            return reduxConnect(
+                (state, ownProps) => {
+                    const props = mapStateToProps(state, ownProps);
+                    invariant(
+                        props.processors === undefined,
+                        'app.connect: mapStateToProps should not return key "processors"'
+                    );
+                    return props;
+                },
+                () => {
+                    // 订阅只执行一次
+                    if (!processors.initialized) {
+                        const _handlers = {};
+                        const _subscriptions = [];
+                        Object.keys(processors).map((key) => {
+                            if (!isNaN(key)) {
+                                _subscriptions.push(processors[key]);
+                            }
+                            else {
+                                _handlers[key] =
+                                    (...args) => processors[key].call(processors, getProcessorArgs(), ...args);
+                            }
+                        });
+                        setTimeout(() => {
+                            _subscriptions.forEach(sub => sub.call(processors, getProcessorArgs()))
+                        }, 0);
+                        processors._handlers = _handlers;
+                        processors.initialized = true;
                     }
-                    _processors[key] = (...args) => processors[key].call(processors, getProcessorArgs(), ...args);
-                });
-                // 订阅只执行一次
-                if (!processors.initialized) {
-                    setTimeout(() => {
-                        _subscriptions.forEach(sub => sub.call(processors, getProcessorArgs()))
-                    }, 0);
-                    processors.initialized = true;
-                }
-                return {
-                    processors: _processors
-                };
-            }, options)(Component);
+                    return {
+                        processors: processors._handlers
+                    };
+                },
+                options
+            )(Component);
         }
+
+        function dispatch(action) {
+            try {
+                // 整合push, replace, go, goBack, goForward 以符合整体dispatch风格
+                if (action.type.indexOf(historyNamespace + SEP) === 0) {
+                    const type = action.type.split('/')[1];
+                    const supportTypeList = Object.keys(historyActionTypes);
+                    invariant(
+                        supportTypeList.indexOf(type) > -1,
+                        `app.dispatch: routing reducers only support "${supportTypeList.join('|')}" but "${type}"`
+                    );
+                    invariant(
+                        action.payload !== undefined,
+                        `app.dispatch: put action params in action.payload`
+                    );
+                    return historyActionTypes[type](action.payload);
+                }
+                return app._store.dispatch(action);
+            } catch(e) {
+                onError(e);
+            }
+        }
+
+        function on(type, handler) {
+            return event.on.call(event, type, handler);
+        }
+
 
         ////////////////////////////////////
         // Helpers
 
-        function dispatch(action) {
-            // 整合push, replace, go, goBack, goForward 以符合整体dispatch风格
-            if (action.type.indexOf('routing/') === 0) {
-                const type = action.type.split('/')[1];
-                const supportTypeList = Object.keys(routingTypes);
-                invariant(
-                    supportTypeList.indexOf(type) > -1,
-                    `app.dispatch: routing reducers only support "${supportTypeList.join('|')}" but "${type}"`
-                );
-                invariant(
-                    action.payload !== undefined,
-                    `app.dispatch: put action params in action.payload`
-                );
-                action = routingTypes[type](action.payload);
-            }
-            return app._store.dispatch(action);
-        }
-
-        function getProvider(store, app, rootComponent) {
+        function getProvider(RootComponent, store) {
             return () => (
                 <Provider store={store}>
-                    <Router history={app._history}>
-                        <Route path="*" component={rootComponent} />
-                    </Router>
+                    <RootComponent />
                 </Provider>
             );
         }
 
-        function render(container, store, app, rootComponent) {
-            ReactDOM.render(React.createElement(getProvider(store, app, rootComponent)), container);
+        function render(container, RootComponent, store) {
+            ReactDOM.render(React.createElement(getProvider(RootComponent, store)), container);
         }
 
-        function checkModel(m, mobile) {
+        function checkModel(m) {
             // Clone model to avoid prefixing namespace multiple times
             const model = { ...m };
             const { namespace, reducers } = model;
@@ -242,8 +266,8 @@ export default function createDeef(createOpts) {
                 'app.model: namespace should be defined'
             );
             invariant(
-                mobile || namespace !== 'routing',
-                'app.model: namespace should not be routing, it\'s used by react-redux-router'
+                namespace !== historyNamespace,
+                `app.model: namespace should not be ${historyNamespace}, which is used to change the location`
             );
             invariant(
                 !reducers || isPlainObject(reducers) || Array.isArray(reducers),
