@@ -171,7 +171,7 @@ Component推荐是纯函数式的组件
 ```js
 // Component函数的第一个参数就是props，或者stateful Component的this.props
 const Component = ({stateX, stateY, processors}) => {
-    return <button onClick={processors.add}>{x}{y}</button>;
+    return <button onClick={processors.add}>{stateX}{stateY}</button>;
 };
 const App = app.connect(mapStateToProps, processors, Component);
 // app.connect传入上面的参数，Component的props为{stateX, stateY, processors}

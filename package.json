@@ -1,6 +1,6 @@
 {
   "name": "deef",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "React and redux based, simple, pure, sturdy framework.",
   "repository": {
     "type": "git",
