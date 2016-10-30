@@ -22,6 +22,7 @@ Model -> Component -> Processors -> Model -> ...
 API很少，几乎所有的API都用在demo里了
 
 ```bash
+$ cd examples/count
 $ npm install
 $ npm start
 ```

@@ -1,5 +1,5 @@
 import React from 'react';
-import deef from './index';
+import deef from 'deef';
 
 const app = deef();
 
