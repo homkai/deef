@@ -1,11 +1,11 @@
 # deef
 一个react、redux的简单、纯粹、健壮的框架
 
-代码分为Model、Component、Processors
+代码分为model、Component、processors
 
-Model -> Component -> Processors -> Model -> ...
+model -> Component -> processors -> model -> ...
 
-**状态（Model）决定展现（Component），交互就是改状态（Processors）**
+**状态（model）决定展现（Component），交互就是改状态（processors）**
 
 编码思路很清晰，状态数据放在model，组件是props的纯函数，
 交互处理就是改状态，改状态只能通过dispatch action这个唯一的入口，
@@ -53,13 +53,13 @@ http://location:8881
 
 ## Introduction
 
-### Model
-Model是最最纯粹的那种model，存数据（state），以及改数据的方法（reducers）
+### model
+model是最最纯粹的那种model，存数据（state），以及改数据的方法（reducers）
 
-Model处理数据，与具体业务无关
+model处理数据，与具体业务无关
 
 ```js
-    const Model = {
+    const model = {
         namespace: 'count',
         state: {
             num: 0
@@ -89,8 +89,8 @@ Component与状态和交互处理解耦，是可以复用的
     <div>;
 ```
 
-### Processors
-Processors是所有交互的处理器
+### processors
+processors是所有交互的处理器
 
 鼠标、键盘事件、路由跳转等等，均由processors响应并处理（dispatch一个action，并交由reducers改状态）
 
@@ -156,7 +156,7 @@ const mapStateToProps = (state, ownProps) => {
 ```
 processors是与当前Component相关的交互处理
 ```js
-const countProcessors = {
+const countprocessors = {
     // handlers for component
     add({dispatch}) {
         dispatch({type: 'count/add'});
@@ -164,8 +164,8 @@ const countProcessors = {
 };
 const processors = {
     // 组合processors是非常容易的
-    ...countProcessors,
-    ...commonProcessors
+    ...countprocessors,
+    ...commonprocessors
 }
 ```
 Component推荐是纯函数式的组件
