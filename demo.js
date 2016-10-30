@@ -127,8 +127,8 @@ const Count = app.connect(
     ({count}) => ({...count}),
     {
         // 组合processors是非常容易的
-        ...countProcessors,
-        ...historyProcessors
+        ...historyProcessors,
+        ...countProcessors
     },
     CountUI
 );

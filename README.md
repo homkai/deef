@@ -5,7 +5,17 @@
 
 Model -> Component -> Processors -> Model -> ...
 
-*状态（Model）决定展现（Component），交互就是改状态（Processors）*
+**状态（Model）决定展现（Component），交互就是改状态（Processors）**
+
+编码思路很清晰，状态数据放在model，组件是props的纯函数，
+交互处理就是改状态，改状态只能通过dispatch action这个唯一的入口，
+然后由model中的reducers处理，reducers是action和state的纯函数
+（No side effects. No API calls. No mutations.），
+用redux的话说叫状态（state）是可预测的（predictable ）。
+再关键的一点，dispatch一般只写在processors中。
+
+这使得代码测试、调试起来很容易：
+我们的model和component逻辑很简单，不容易会出错，所以更多只需要关心processors中是否正确地响应了某一交互动作，并dispatch了某个action就行
 
 ## Demo
 
@@ -17,6 +27,8 @@ $ npm start
 ```
 http://location:8881
 
+参见demo.js
+
 ## Usage
 ```js
     import deef from 'deef';
@@ -24,10 +36,10 @@ http://location:8881
     // 1. Create app
     const app = deef();
     
-    // 2. Connect components width model and processors
-    const model = {//...};
-    const processors = {//...};
-    const Component = () => {//...};
+    // 2. Connect components with model and processors
+    const model = {};
+    const processors = {};
+    const Component = () => {};
     const App = app.connect(mapStateToProps, processors, Component);
     
     // 3. Register models
@@ -116,3 +128,51 @@ processors是plan object——方便组合！方便组合！方便组合！
 - error processor出错的hook
 - stateChange 可以让state和localStorage或者远程的service建立连接
 - hmr 热替换
+
+### app.connect
+app.connect(mapStateToProps, processors, Component, options)基于react-redux的connect封装
+
+mapStateToProps与react-redux的一致
+```js
+const modelA = {
+    namespace: 'A',
+    state: {
+        x: 'test'
+    }
+};
+const modelB = {
+    namespace: 'B',
+    state: {
+        y: 'test'
+    }
+};
+const mapStateToProps = (state, ownProps) => {
+    return {
+        stateX: state.A.x,
+        stateY: state.B.y
+    }
+}; 
+```
+processors是与当前Component相关的交互处理
+```js
+const countProcessors = {
+    // handlers for component
+    add({dispatch}) {
+        dispatch({type: 'count/add'});
+    }
+};
+const processors = {
+    // 组合processors是非常容易的
+    ...countProcessors,
+    ...commonProcessors
+}
+```
+Component推荐是纯函数式的组件
+```js
+    // Component函数的第一个参数就是props，或者stateful Component的this.props
+    const Component = ({stateX, stateY, processors}) => {
+        return <button onClick={processors.add}>{x}{y}</button>;
+    };
+    const App = app.connect(mapStateToProps, processors, Component);
+    // app.connect传入上面的参数，Component的props为{stateX, stateY, processors}
+```
