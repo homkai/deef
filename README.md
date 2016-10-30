@@ -32,22 +32,22 @@ http://location:8881
 
 ## Usage
 ```js
-    import deef from 'deef';
-    
-    // 1. Create app
-    const app = deef();
-    
-    // 2. Connect components with model and processors
-    const model = {};
-    const processors = {};
-    const Component = () => {};
-    const App = app.connect(mapStateToProps, processors, Component);
-    
-    // 3. Register models
-    app.model(model);
-    
-    // 4. Start app
-    app.start('#root', App);
+import deef from 'deef';
+
+// 1. Create app
+const app = deef();
+
+// 2. Connect components with model and processors
+const model = {};
+const processors = {};
+const Component = () => {};
+const App = app.connect(mapStateToProps, processors, Component);
+
+// 3. Register models
+app.model(model);
+
+// 4. Start app
+app.start('#root', App);
 ```
 *app.connect在业务代码里非常常用，推荐将const app = deef()等逻辑，放到单独一个模块，方便引用*
 
@@ -59,20 +59,20 @@ model是最最纯粹的那种model，存数据（state），以及改数据的�
 model处理数据，与具体业务无关
 
 ```js
-    const model = {
-        namespace: 'count',
-        state: {
-            num: 0
-        },
-        reducers: {
-            add(state) {
-                return {
-                    ...state,
-                    num: state.num + 1
-                };
-            }
+const model = {
+    namespace: 'count',
+    state: {
+        num: 0
+    },
+    reducers: {
+        add(state) {
+            return {
+                ...state,
+                num: state.num + 1
+            };
         }
-    };
+    }
+};
 ```
 
 ### Component
@@ -83,10 +83,10 @@ Component 是 无状态函数式组件（stateless functional component），pro
 Component与状态和交互处理解耦，是可以复用的
 
 ```js
-    const Component = ({num, processors}) => <div>
-        <h1>{num}</h1>
-        <button onClick={processors.add}></button>
-    <div>;
+const Component = ({num, processors}) => <div>
+    <h1>{num}</h1>
+    <button onClick={processors.add}></button>
+<div>;
 ```
 
 ### processors
@@ -101,24 +101,24 @@ key为number的function是subscriptions，用于订阅数据、监听键盘事�
 processors是plan object——方便组合！方便组合！方便组合！
 
 ```js
-    const processors = {
-        // handlers for component
-        add({dispatch}) {
-            dispatch({type: 'count/add'});
-        },
-        // subscriptions 订阅 只执行一次
-        ...[
-            function ({dispatch, getState, on}) {
-                // 显示鼓励的时候 再加10分
-                let off = on('action', (action) => {
-                    if (action.type === 'count/showEncourage') {
-                        off();
-                        dispatch({type: 'count/setNum', payload: getState().count.num + 10});
-                    }
-                });
-            }
-        ]
-    };
+const processors = {
+    // handlers for component
+    add({dispatch}) {
+        dispatch({type: 'count/add'});
+    },
+    // subscriptions 订阅 只执行一次
+    ...[
+        function ({dispatch, getState, on}) {
+            // 显示鼓励的时候 再加10分
+            let off = on('action', (action) => {
+                if (action.type === 'count/showEncourage') {
+                    off();
+                    dispatch({type: 'count/setNum', payload: getState().count.num + 10});
+                }
+            });
+        }
+    ]
+};
 ```
 
 #### on
@@ -156,7 +156,7 @@ const mapStateToProps = (state, ownProps) => {
 ```
 processors是与当前Component相关的交互处理
 ```js
-const countprocessors = {
+const countProcessors = {
     // handlers for component
     add({dispatch}) {
         dispatch({type: 'count/add'});
@@ -164,16 +164,16 @@ const countprocessors = {
 };
 const processors = {
     // 组合processors是非常容易的
-    ...countprocessors,
-    ...commonprocessors
+    ...countProcessors,
+    ...commonProcessors
 }
 ```
 Component推荐是纯函数式的组件
 ```js
-    // Component函数的第一个参数就是props，或者stateful Component的this.props
-    const Component = ({stateX, stateY, processors}) => {
-        return <button onClick={processors.add}>{x}{y}</button>;
-    };
-    const App = app.connect(mapStateToProps, processors, Component);
-    // app.connect传入上面的参数，Component的props为{stateX, stateY, processors}
+// Component函数的第一个参数就是props，或者stateful Component的this.props
+const Component = ({stateX, stateY, processors}) => {
+    return <button onClick={processors.add}>{x}{y}</button>;
+};
+const App = app.connect(mapStateToProps, processors, Component);
+// app.connect传入上面的参数，Component的props为{stateX, stateY, processors}
 ```
