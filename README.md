@@ -28,7 +28,7 @@ $ npm start
 ```
 http://location:8881
 
-参见demo.js
+参见examples/count/demo.js
 
 ## Usage
 ```js
