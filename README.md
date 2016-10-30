@@ -1,6 +1,7 @@
 # deef
 一个react、redux的简单、纯粹、健壮的框架
 
+## Concepts
 代码分为model、Component、processors
 
 model -> Component -> processors -> model -> ...
@@ -15,7 +16,8 @@ model -> Component -> processors -> model -> ...
 再关键的一点，dispatch一般只写在processors中。
 
 这使得代码测试、调试起来很容易：
-我们的model和component逻辑很简单，不容易会出错，所以更多只需要关心processors中是否正确地响应了某一交互动作，并dispatch了某个action就行
+我们的model和component逻辑很简单，不容易出错，
+所以更多只需要关心processors中是否正确地响应了某一交互动作，并dispatch了某个action就行
 
 ## Demo
 
@@ -30,7 +32,7 @@ http://location:8881
 
 参见examples/count/demo.js
 
-## Usage
+## Getting Started
 ```js
 import deef from 'deef';
 
@@ -51,12 +53,12 @@ app.start('#root', App);
 ```
 *app.connect在业务代码里非常常用，推荐将const app = deef()等逻辑，放到单独一个模块，方便引用*
 
-## Introduction
+## Usages
 
 ### model
 model是最最纯粹的那种model，存数据（state），以及改数据的方法（reducers）
 
-model处理数据，与具体业务无关
+**model处理数据，与具体业务无关**
 
 ```js
 const model = {
@@ -80,7 +82,7 @@ Component 是 无状态函数式组件（stateless functional component），pro
 
 纯粹到类似N年前的模板引擎doT、mustache
 
-Component与状态和交互处理解耦，是可以复用的
+**Component与状态和交互处理解耦，是可以复用的**
 
 ```js
 const Component = ({num, processors}) => <div>
@@ -94,11 +96,7 @@ processors是所有交互的处理器
 
 鼠标、键盘事件、路由跳转等等，均由processors响应并处理（dispatch一个action，并交由reducers改状态）
 
-key为number的function是subscriptions，用于订阅数据、监听键盘事件、路由跳转等等
-
-否则为handlers，用于组件的事件响应
-
-processors是plan object——方便组合！方便组合！方便组合！
+**processors是plan object——方便组合！方便组合！方便组合！**
 
 ```js
 const processors = {
@@ -120,7 +118,8 @@ const processors = {
     ]
 };
 ```
-
+*key为number的function是subscriptions，用于订阅数据、监听键盘事件、路由跳转等等，否则为handlers，用于组件的事件响应*
+ 
 #### on
 支持的有
 
