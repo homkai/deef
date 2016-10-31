@@ -1,6 +1,6 @@
 {
   "name": "deef",
-  "version": "0.0.8",
+  "version": "0.1.0",
   "description": "React and redux based, simple, pure, sturdy framework.",
   "repository": {
     "type": "git",
@@ -24,10 +24,9 @@
     "url": "https://github.com/homkai/deef/issues"
   },
   "dependencies": {
-    "global": "^4.3.1",
     "history": "^4.3.0",
     "invariant": "^2.2.1",
-    "is-plain-object": "^2.0.1",
+    "lodash": "^4.16.5",
     "react-redux": "4.4.x",
     "redux": "^3.6.0",
     "redux-actions": "^0.12.0",
@@ -46,11 +45,11 @@
     "babel-preset-stage-0": "^6.16.0",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
-    "webpack": "^1.13.3",
-    "webpack-dev-server": "^1.16.2"
+    "webpack": "^1.13.3"
   },
   "scripts": {
-    "build": "babel src --out-dir lib"
+    "build": "babel src --out-dir lib",
+    "bundle": "webpack"
   },
   "files": [
     "lib",

@@ -14,7 +14,7 @@ class Event {
 
     on(type, handler) {
         const hooks = this.hooks;
-        invariant(hooks[type], `app.hooks: unknown hook type: ${type}`);
+        invariant(hooks[type], `deef->on: unknown hook type: ${type}`);
         const fns = hooks[type];
         fns.push(handler);
         return this.off.bind(this, type, handler);
