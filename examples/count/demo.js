@@ -168,20 +168,22 @@ const AppUI = ({componentName}) => {
     </div>;
 };
 
+// 路由表 是 rule到action的map，比react-router更灵活
+const config = {
+    LOCATIONS: {
+        '/': {type: 'app/changeComponent', payload: 'Count'},
+        '/test': {type: 'app/changeComponent', payload: 'Test'}
+    }
+};
+
 const appProcessor = {
     ...[
         // 订阅pathname
         function ({dispatch, on}) {
             // 路由什么的，在订阅里监听history，然后dispatch
             on('history', location => {
-                switch (location.pathname) {
-                    case '/':
-                        dispatch({type: 'app/changeComponent', payload: 'Count'});
-                        break;
-                    case '/test':
-                        dispatch({type: 'app/changeComponent', payload: 'Test'});
-                        break;
-                }
+                const action = config.LOCATIONS[location.pathname];
+                action && dispatch(action);
             });
         }
     ]

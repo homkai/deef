@@ -7,6 +7,7 @@ const FILTERS = {
 	COMPLETED: 'completed'
 };
 
+// 路由表 是 rule到action的map，比react-router更灵活
 const LOCATIONS = {
 	'/': {
 		type: 'todo/filter',
