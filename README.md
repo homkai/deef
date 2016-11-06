@@ -2,35 +2,35 @@
 一个react、redux的简单、纯粹、健壮的框架
 
 ## Concepts
-代码分为model、Component、processors
+代码分为model、Component、processor
 
-model -> Component -> processors -> model -> ...
+model -> Component -> processor -> model -> ...
 
-**状态（model）决定展现（Component），交互就是改状态（processors）**
+**状态（model）决定展现（Component），交互就是改状态（processor）**
 
 编码思路很清晰，状态数据放在model，组件是props的纯函数，
 交互处理就是改状态，改状态只能通过dispatch action这个唯一的入口，
 然后由model中的reducers处理，reducers是action和state的纯函数
 （No side effects. No API calls. No mutations.），
 用redux的话说叫状态（state）是可预测的（predictable ）。
-再关键的一点，dispatch一般只写在processors中。
+再关键的一点，dispatch一般只写在processor中。
 
 这使得代码测试、调试起来很容易：
 我们的model和component逻辑很简单，不容易出错，
-所以更多只需要关心processors中是否正确地响应了某一交互动作，并dispatch了某个action就行
+所以更多只需要关心processor中是否正确地响应了某一交互动作，并dispatch了某个action就行
 
 ## Demo
 
-API很少，几乎所有的API都用在demo里了
+API很少，看个example就知道怎么用了
 
 ```bash
-$ cd examples/count
+$ cd examples/xxx
 $ npm install
 $ npm start
 ```
 http://location:8881
 
-参见examples/count/demo.js
+参见 examples文件夹
 
 ## Getting Started
 ```js
@@ -39,11 +39,11 @@ import deef from 'deef';
 // 1. Create app
 const app = deef();
 
-// 2. Connect components with model and processors
+// 2. Connect components with model and processor
 const model = {};
-const processors = {};
+const processor = {};
 const Component = () => {};
-const App = app.connect(mapStateToProps, processors, Component);
+const App = app.connect(mapStateToProps, processor, Component);
 
 // 3. Register models
 app.model(model);
@@ -85,21 +85,21 @@ Component 是 无状态函数式组件（stateless functional component），pro
 **Component与状态和交互处理解耦，是可以复用的**
 
 ```js
-const Component = ({num, processors}) => <div>
+const Component = ({num, processor}) => <div>
     <h1>{num}</h1>
-    <button onClick={processors.add}></button>
+    <button onClick={processor.add}></button>
 <div>;
 ```
 
-### processors
-processors是所有交互的处理器
+### processor
+processor是所有交互的处理器
 
-鼠标、键盘事件、路由跳转等等，均由processors响应并处理（dispatch一个action，并交由reducers改状态）
+鼠标、键盘事件、路由跳转等等，均由processor响应并处理（dispatch一个action，并交由reducers改状态）
 
-**processors是plan object——方便组合！方便组合！方便组合！**
+**processor是plan object——方便组合！方便组合！方便组合！**
 
 ```js
-const processors = {
+const processor = {
     // handlers for component
     add({dispatch}) {
         dispatch({type: 'count/add'});
@@ -130,7 +130,7 @@ const processors = {
 - hmr 热替换
 
 ### app.connect
-app.connect(mapStateToProps, processors, Component, options)基于react-redux的connect封装
+app.connect(mapStateToProps, processor, Component, options)基于react-redux的connect封装
 
 mapStateToProps与react-redux的一致
 ```js
@@ -153,26 +153,26 @@ const mapStateToProps = (state, ownProps) => {
     }
 }; 
 ```
-processors是与当前Component相关的交互处理
+processor是与当前Component相关的交互处理
 ```js
-const countProcessors = {
+const countProcessor = {
     // handlers for component
     add({dispatch}) {
         dispatch({type: 'count/add'});
     }
 };
-const processors = {
-    // 组合processors是非常容易的
-    ...countProcessors,
-    ...commonProcessors
+const processor = {
+    // 组合processor是非常容易的
+    ...countProcessor,
+    ...commonProcessor
 }
 ```
 Component推荐是纯函数式的组件
 ```js
 // Component函数的第一个参数就是props，或者stateful Component的this.props
-const Component = ({stateX, stateY, processors}) => {
-    return <button onClick={processors.add}>{stateX}{stateY}</button>;
+const Component = ({stateX, stateY, processor}) => {
+    return <button onClick={processor.add}>{stateX}{stateY}</button>;
 };
-const App = app.connect(mapStateToProps, processors, Component);
-// app.connect传入上面的参数，Component的props为{stateX, stateY, processors}
+const App = app.connect(mapStateToProps, processor, Component);
+// app.connect传入上面的参数，Component的props为{stateX, stateY, processor}
 ```

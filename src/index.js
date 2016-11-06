@@ -10,10 +10,9 @@ import warning from 'warning';
 import Event from './event';
 
 const SEP = '/';
-const historyNamespace = 'history';
 
 export default function (opts = {}) {
-    const {
+    let {
         initialReducer = {},
         initialState = {},
         reducerEnhancer = (reducers => reducers),
@@ -22,17 +21,41 @@ export default function (opts = {}) {
 
     const event = new Event();
 
-    let historyActionTypes = {};
-    {
-        const {listen, push, replace, go, goBack, goForward, location, action} = history;
-        invariant(
-            listen && push && location,
-            `deef->deef(): history must have "listen, push, location{pathname, search}" properties`
-        );
-        historyActionTypes = {push, replace, go, goBack, goForward};
+    if (history) {
+        // 插件的方式 注册 history
+        plugin(({event}) => {
+            const {listen, push, replace, go, goBack, goForward, location, action} = history;
+            invariant(
+                listen && push && location,
+                `deef->deef(): history must have "listen, push, location{pathname, search}" properties`
+            );
 
-        history.listen((...args) => {
-            event.trigger('history', args);
+            event.hook('history');
+            history.listen((...args) => {
+                event.trigger('history', args);
+            });
+
+            // 整合push, replace, go, goBack, goForward dispatch('history/push', '/example');
+            const historyActionTypes = {push, replace, go, goBack, goForward};
+            const supportTypeList = Object.keys(historyActionTypes);
+            event.on('action', ({type, payload}) => {
+                if (type.indexOf('history' + SEP) === 0) {
+                    const method = type.split('/')[1];
+                    invariant(
+                        supportTypeList.indexOf(method) > -1,
+                        `deef->dispatch: history only support "${supportTypeList.join('|')}" but "${method}"`
+                    );
+                    invariant(
+                        payload !== undefined,
+                        `deef->dispatch: no "payload" found in action`
+                    );
+                    historyActionTypes[method](payload);
+                }
+            });
+
+            event.on('start', () => {
+                event.trigger('history', [history.location, history.action]);
+            });
         });
     }
 
@@ -51,14 +74,13 @@ export default function (opts = {}) {
         // private properties
         _models: [],
         _store: null,
+        _history: history,
+        _event: event,
         // methods
         model,
+        plugin,
         start,
-        connect,
-        // not recommended
-        _history: history,
-        _dispatch: dispatch,
-        _on: on
+        connect
     };
     return app;
 
@@ -73,6 +95,15 @@ export default function (opts = {}) {
      */
     function model(model) {
         this._models.push(checkModel(model));
+    }
+
+    /**
+     * Register a plugin.
+     *
+     * @param reg 注册方法
+     */
+    function plugin(reg) {
+        reg({event});
     }
 
     // inject model dynamically
@@ -148,94 +179,73 @@ export default function (opts = {}) {
 
         // If has container, render; else, return react component
         if (container) {
-            render(container, RootComponent, store);
-            event.trigger('hmr', [render.bind(this, container, store, this)]);
-            setTimeout(() => {
-                event.trigger('history', [history.location, history.action]);
-            }, 0);
+            render(container, store, RootComponent);
+            event.trigger('hmr', [render.bind(this, store, container)]);
+            setTimeout(() => event.trigger('start'), 0);
         } else {
-            return getProvider(RootComponent, store);
+            return getProvider(store, RootComponent);
         }
     }
 
-    function connect(mapStateToProps, processors, Component, options) {
-        mapStateToProps = mapStateToProps || (() => ({}));
-        processors = processors || {};
-        const getProcessorArgs = () => {
-            return {
-                getState: app._store.getState,
-                dispatch,
-                on
-            };
+    function getProcessorArgs() {
+        return {
+            getState: app._store.getState,
+            dispatch: (...args) => {
+                try {
+                    return app._store.dispatch(...args);
+                } catch(e) {
+                    onError(e);
+                }
+            },
+            on: (...args) => event.on.apply(event, args)
         };
+    }
+
+    function connect(mapStateToProps, processor, Component, options = undefined) {
+        mapStateToProps = mapStateToProps || ((state, ownProps) => (ownProps));
+        processor = processor || {};
         return reduxConnect(
             (state, ownProps) => {
                 const props = mapStateToProps(state, ownProps);
                 invariant(
-                    props.processors === undefined,
-                    'deef->connect: mapStateToProps should not return key "processors"'
+                    props.processor === undefined,
+                    'deef->connect: mapStateToProps should not return key "processor"'
                 );
                 return props;
             },
             () => {
                 // 订阅只执行一次
-                if (!processors.initialized) {
+                if (!processor.initialized) {
                     const _handlers = {};
                     const _subscriptions = [];
-                    Object.keys(processors).map((key) => {
+                    Object.keys(processor).map((key) => {
                         if (!isNaN(key)) {
-                            _subscriptions.push(processors[key]);
+                            _subscriptions.push(processor[key]);
                         }
                         else {
                             _handlers[key] =
-                                (...args) => processors[key].call(processors, getProcessorArgs(), ...args);
+                                (...args) => processor[key].call(processor, getProcessorArgs(), ...args);
                         }
                     });
                     setTimeout(() => {
-                        _subscriptions.forEach(sub => sub.call(processors, getProcessorArgs()))
+                        _subscriptions.forEach(sub => sub.call(processor, getProcessorArgs()))
                     }, 0);
-                    processors._handlers = _handlers;
-                    processors.initialized = true;
+                    processor._handlers = _handlers;
+                    processor.initialized = true;
                 }
                 return {
-                    processors: processors._handlers
+                    processor: processor._handlers
                 };
             },
             options
         )(Component);
     }
 
-    function dispatch(action) {
-        try {
-            // 整合push, replace, go, goBack, goForward 以符合整体dispatch风格
-            if (action.type.indexOf(historyNamespace + SEP) === 0) {
-                const type = action.type.split('/')[1];
-                const supportTypeList = Object.keys(historyActionTypes);
-                invariant(
-                    supportTypeList.indexOf(type) > -1,
-                    `deef->dispatch: routing reducers only support "${supportTypeList.join('|')}" but "${type}"`
-                );
-                invariant(
-                    action.payload !== undefined,
-                    `deef->dispatch: put action params in action.payload`
-                );
-                return historyActionTypes[type](action.payload);
-            }
-            return app._store.dispatch(action);
-        } catch(e) {
-            onError(e);
-        }
-    }
-
-    function on(type, handler) {
-        return event.on.call(event, type, handler);
-    }
-
 
     ////////////////////////////////////
     // Helpers
 
-    function getProvider(RootComponent, store) {
+    function getProvider(store, RootComponent) {
         return () => (
             <Provider store={store}>
                 <RootComponent />
@@ -243,8 +253,8 @@ export default function (opts = {}) {
         );
     }
 
-    function render(container, RootComponent, store) {
-        ReactDOM.render(React.createElement(getProvider(RootComponent, store)), container);
+    function render(container, store, RootComponent) {
+        ReactDOM.render(React.createElement(getProvider(store, RootComponent)), container);
     }
 
     function checkModel(m) {
@@ -256,9 +266,9 @@ export default function (opts = {}) {
             namespace,
             'deef->model: namespace should be defined'
         );
-        invariant(
-            namespace !== historyNamespace,
-            `deef->model: namespace should not be ${historyNamespace}, which is used to change the location`
+        history && invariant(
+            namespace !== 'history',
+            `deef->model: namespace should not be "history", which is used to change the location`
         );
         invariant(
             !reducers || isPlainObject(reducers) || Array.isArray(reducers),

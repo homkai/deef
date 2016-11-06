@@ -5,11 +5,16 @@ class Event {
     constructor() {
         this.hooks = {
             error: [],
-            history: [],
             action: [],
             stateChange: [],
-            hmr: []
+            hmr: [],
+            start: []
         };
+    }
+
+    hook(type) {
+        const hooks = this.hooks;
+        hooks[type] = [];
     }
 
     on(type, handler) {

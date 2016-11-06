@@ -1,6 +1,6 @@
 {
   "name": "deef-examples-count",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "deef: React and redux based, simple, pure, sturdy framework.",
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
     "url": "https://github.com/homkai/deef/issues"
   },
   "dependencies": {
-    "deef": "^0.1.0",
+    "deef": "^0.1.2",
     "react": "^15.3.2",
     "react-dom": "^15.3.2"
   },

@@ -5,9 +5,9 @@ const app = deef();
 
 
 ////////////////////////////////////
-// Common Processors
+// Common Processor
 
-const historyProcessors = {
+const historyProcessor = {
     historyPush({dispatch}, payload) {
         dispatch({
             type: 'history/push',
@@ -57,8 +57,8 @@ const countModel = {
     }
 };
 
-const CountUI = ({processors, num, encourage}) => {
-    const {add, minus, historyPush, test} = processors;
+const CountUI = ({processor, num, encourage}) => {
+    const {add, minus, historyPush, test} = processor;
 
     return (
         <div>
@@ -71,13 +71,13 @@ const CountUI = ({processors, num, encourage}) => {
     );
 };
 
-const countProcessors = {
+const countProcessor = {
     // handlers for component
     add({dispatch}) {
         dispatch({type: 'count/add'});
     },
     minus({dispatch}) {
-        // 可以利用this在processors全局挂一些东西，注意这个this不是countProcessors，而是在connect时传入的processors
+        // 可以利用this在processor全局挂一些东西，注意这个this不是countProcessor，而是在connect时传入的processor
         if (!this._minused) {
             // 第一次点减号的时候，跳转到test
             this._minused = true;
@@ -126,9 +126,9 @@ const countProcessors = {
 const Count = app.connect(
     ({count}) => ({...count}),
     {
-        // 组合processors是非常容易的
-        ...historyProcessors,
-        ...countProcessors
+        // 组合processor是非常容易的
+        ...historyProcessor,
+        ...countProcessor
     },
     CountUI
 );
@@ -137,18 +137,11 @@ const Count = app.connect(
 ////////////////////////////////////
 // Test Module
 
-const TestUI = ({processors}) =>
+const Test = () =>
     <div>
         <p>第一次点减号的时候，会跳转到Test页面</p>
-        <button onClick={() => processors.historyPush('/')}>Back to the count page</button>
+        <a href="#/">Back to the count page</a>
     </div>;
-
-const Test = app.connect(
-    // mapStateToProps 和 processors都不是必须的，但是存在时，必须返回（是） plan object
-    null,
-    historyProcessors,
-    TestUI
-);
 
 
 ////////////////////////////////////
@@ -175,7 +168,7 @@ const AppUI = ({componentName}) => {
     </div>;
 };
 
-const appProcessors = {
+const appProcessor = {
     ...[
         // 订阅pathname
         function ({dispatch, on}) {
@@ -198,7 +191,7 @@ const App = app.connect(
     ({app}) => {
         return app;
     },
-    appProcessors,
+    appProcessor,
     AppUI
 );
 
