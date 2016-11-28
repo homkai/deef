@@ -7,14 +7,8 @@ class Event {
             error: [],
             action: [],
             stateChange: [],
-            hmr: [],
-            start: []
+            hmr: []
         };
-    }
-
-    hook(type) {
-        const hooks = this.hooks;
-        hooks[type] = [];
     }
 
     on(type, handler) {

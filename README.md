@@ -85,9 +85,9 @@ Component 是 无状态函数式组件（stateless functional component），pro
 **Component与状态和交互处理解耦，是可以复用的**
 
 ```js
-const Component = ({num, processor}) => <div>
+const Component = ({num, onAdd}) => <div>
     <h1>{num}</h1>
-    <button onClick={processor.add}></button>
+    <button onClick={onAdd}></button>
 <div>;
 ```
 
@@ -101,36 +101,35 @@ processor是所有交互的处理器
 ```js
 const processor = {
     // handlers for component
-    add({dispatch}) {
+    onAdd({dispatch}) {
         dispatch({type: 'count/add'});
     },
     // subscriptions 订阅 只执行一次
-    ...[
-        function ({dispatch, getState, on}) {
+    subscriptions: {
+        init({dispatch, getState, on}) {
             // 显示鼓励的时候 再加10分
-            let off = on('action', (action) => {
+            const off = on('action', (action) => {
                 if (action.type === 'count/showEncourage') {
                     off();
                     dispatch({type: 'count/setNum', payload: getState().count.num + 10});
                 }
             });
         }
-    ]
+    }
 };
 ```
-*key为number的function是subscriptions，用于订阅数据、监听键盘事件、路由跳转等等，否则为handlers，用于组件的事件响应*
+*subscriptions是plain object，用于订阅数据、监听键盘事件、路由跳转等等，否则为function，用于组件的事件响应*
  
 #### on
 支持的有
 
 - action 调用dispatch的hook  等同于redux middleware
-- history location跳转的hook
 - error processor出错的hook
 - stateChange 可以让state和localStorage或者远程的service建立连接
 - hmr 热替换
 
 ### app.connect
-app.connect(mapStateToProps, processor, Component, options)基于react-redux的connect封装
+app.connect(mapStateToProps, processor)(Component)基于react-redux的connect封装
 
 mapStateToProps与react-redux的一致
 ```js
@@ -170,9 +169,9 @@ const processor = {
 Component推荐是纯函数式的组件
 ```js
 // Component函数的第一个参数就是props，或者stateful Component的this.props
-const Component = ({stateX, stateY, processor}) => {
-    return <button onClick={processor.add}>{stateX}{stateY}</button>;
+const Component = ({stateX, stateY, onAdd}) => {
+    return <button onClick={onAdd}>{stateX}{stateY}</button>;
 };
-const App = app.connect(mapStateToProps, processor, Component);
-// app.connect传入上面的参数，Component的props为{stateX, stateY, processor}
+const App = app.connect(mapStateToProps, processor)(Component);
+// app.connect传入上面的参数，Component的props为{stateX, stateY, onAdd}
 ```

@@ -1,21 +1,9 @@
 import React from 'react';
-import deef from 'deef';
+import deef from '../../src/index';
+import createHashHistory from  'history/createHashHistory';
 
 const app = deef();
-
-
-////////////////////////////////////
-// Common Processor
-
-const historyProcessor = {
-    historyPush({dispatch}, payload) {
-        dispatch({
-            type: 'history/push',
-            payload
-        });
-    }
-};
-
+const history = createHashHistory();
 
 ////////////////////////////////////
 // Count Module
@@ -57,15 +45,14 @@ const countModel = {
     }
 };
 
-const CountUI = ({processor, num, encourage}) => {
-    const {add, minus, historyPush, test} = processor;
+const CountUI = ({onAdd, onMinus, num, encourage}) => {
 
     return (
         <div>
             <h2>分数：{num}分</h2>
-            <button onClick={add}>+</button>
-            <button onClick={minus}>-</button>
-            <button onClick={() => historyPush('/test')}>Go to the test page</button>
+            <button onClick={onAdd}>+</button>
+            <button onClick={onMinus}>-</button>
+            <a href="#/test">Go to the test page</a>
             <p>{encourage && <small>已获得3分，真棒，继续努力（奖励10分，只奖励首次~）！</small>}</p>
         </div>
     );
@@ -73,36 +60,19 @@ const CountUI = ({processor, num, encourage}) => {
 
 const countProcessor = {
     // handlers for component
-    add({dispatch}) {
+    onAdd({dispatch}) {
         dispatch({type: 'count/add'});
     },
-    minus({dispatch}) {
-        // 可以利用this在processor全局挂一些东西，注意这个this不是countProcessor，而是在connect时传入的processor
-        if (!this._minused) {
-            // 第一次点减号的时候，跳转到test
-            this._minused = true;
-            // 各种hash跳转 集成封装
-            dispatch({type: 'history/push', payload: '/test'});
-            return;
-        }
+    onMinus({dispatch}) {
         dispatch({type: 'count/minus'});
     },
-    ...[
+    subscriptions: {
         // subscriptions 这些方法都是只运行一次
-        function ({dispatch, on}) {
+        init({dispatch, on}) {
             // 指定初始值
             dispatch({type: 'count/setNum', payload: 10});
         },
-        function ({dispatch, getState, on}) {
-            // 显示鼓励的时候 再加10分
-            let off = on('action', (action) => {
-                if (action.type === 'count/showEncourage') {
-                    off();
-                    dispatch({type: 'count/setNum', payload: getState().count.num + 10});
-                }
-            });
-        },
-        function ({dispatch, getState, on}) {
+        encourage({dispatch, getState, on}) {
             let previousValue = getState().count.num;
             let off = on('stateChange', () => {
                 let currentCount = getState().count.num;
@@ -110,6 +80,8 @@ const countProcessor = {
                 if (currentCount - previousValue > 3) {
                     off();
                     dispatch({type: 'count/showEncourage'});
+                    // 显示鼓励的时候 再加10分
+                    dispatch({type: 'count/setNum', payload: getState().count.num + 10});
                 }
             });
 
@@ -120,18 +92,13 @@ const countProcessor = {
                 }
             });
         }
-    ]
+    }
 };
 
 const Count = app.connect(
     ({count}) => ({...count}),
-    {
-        // 组合processor是非常容易的
-        ...historyProcessor,
-        ...countProcessor
-    },
-    CountUI
-);
+    countProcessor
+)(CountUI);
 
 
 ////////////////////////////////////
@@ -139,7 +106,6 @@ const Count = app.connect(
 
 const Test = () =>
     <div>
-        <p>第一次点减号的时候，会跳转到Test页面</p>
         <a href="#/">Back to the count page</a>
     </div>;
 
@@ -177,25 +143,26 @@ const config = {
 };
 
 const appProcessor = {
-    ...[
+    subscriptions: {
         // 订阅pathname
-        function ({dispatch, on}) {
+        route({dispatch}) {
             // 路由什么的，在订阅里监听history，然后dispatch
-            on('history', location => {
+            const route = location => {
                 const action = config.LOCATIONS[location.pathname];
                 action && dispatch(action);
-            });
+            };
+            history.listen(route);
+            route(history.location);
         }
-    ]
+    }
 };
 
 const App = app.connect(
     ({app}) => {
         return app;
     },
-    appProcessor,
-    AppUI
-);
+    appProcessor
+)(AppUI);
 
 app.model(appModel);
 app.model(countModel);

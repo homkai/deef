@@ -1,7 +1,7 @@
 /**
  * Created by Homkai on 2016/11/5.
  */
-import {FILTERS} from '../config';
+import {FILTERS} from '../../config';
 
 export default {
 	namespace: 'todo',
@@ -12,7 +12,7 @@ export default {
 		filter: FILTERS.ALL
 	},
 	reducers: {
-		rehydrate(state, {payload: storedState}) {
+		restore(state, {payload: storedState}) {
 			return storedState;
 		},
 		inputNewTodo(state, {payload: content}) {
@@ -86,6 +86,17 @@ export default {
 			return {
 				...state,
 				filter
+			};
+		},
+		testAsync(state, {payload}) {
+			const todoList = [...state.todoList];
+			!todoList.filter(todo => todo.content === payload).length && todoList.push({
+				content: payload,
+				completed: false
+			});
+			return {
+				...state,
+				todoList
 			};
 		}
 	}

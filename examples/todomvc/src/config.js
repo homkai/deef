@@ -1,14 +1,14 @@
 /**
  * Created by Homkai on 2016/11/5.
  */
-const FILTERS = {
+export const FILTERS = {
 	ALL: 'all',
 	ACTIVE: 'active',
 	COMPLETED: 'completed'
 };
 
 // 路由表 是 rule到action的map，比react-router更灵活
-const LOCATIONS = {
+export const LOCATIONS = {
 	'/': {
 		type: 'todo/filter',
 		payload: FILTERS.ALL
@@ -23,5 +23,4 @@ const LOCATIONS = {
 	}
 };
 
-exports.FILTERS = FILTERS;
-exports.LOCATIONS = LOCATIONS;
+export const STORAGE_KEY = 'deef-todomvc';

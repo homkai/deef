@@ -21,7 +21,8 @@
     "url": "https://github.com/homkai/deef/issues"
   },
   "dependencies": {
-    "deef": "^0.1.2",
+    "deef": "^0.2.1",
+    "history": "^4.4.1",
     "react": "^15.3.2",
     "react-dom": "^15.3.2"
   },

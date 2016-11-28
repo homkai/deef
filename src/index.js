@@ -3,61 +3,20 @@ import ReactDOM from 'react-dom';
 import {createStore, applyMiddleware, compose, combineReducers} from 'redux';
 import {Provider, connect as reduxConnect} from 'react-redux';
 import handleActions from 'redux-actions/lib/handleActions';
-import createHistory from 'history/createHashHistory';
 import isPlainObject from 'lodash/isPlainObject';
 import invariant from 'invariant';
-import warning from 'warning';
 import Event from './event';
 
 const SEP = '/';
 
 export default function (opts = {}) {
-    let {
+    const {
         initialReducer = {},
         initialState = {},
-        reducerEnhancer = (reducers => reducers),
-        history = createHistory()
+        reducerEnhancer = (reducers => reducers)
     } = opts;
 
     const event = new Event();
-
-    if (history) {
-        // 插件的方式 注册 history
-        plugin(({event}) => {
-            const {listen, push, replace, go, goBack, goForward, location, action} = history;
-            invariant(
-                listen && push && location,
-                `deef->deef(): history must have "listen, push, location{pathname, search}" properties`
-            );
-
-            event.hook('history');
-            history.listen((...args) => {
-                event.trigger('history', args);
-            });
-
-            // 整合push, replace, go, goBack, goForward dispatch('history/push', '/example');
-            const historyActionTypes = {push, replace, go, goBack, goForward};
-            const supportTypeList = Object.keys(historyActionTypes);
-            event.on('action', ({type, payload}) => {
-                if (type.indexOf('history' + SEP) === 0) {
-                    const method = type.split('/')[1];
-                    invariant(
-                        supportTypeList.indexOf(method) > -1,
-                        `deef->dispatch: history only support "${supportTypeList.join('|')}" but "${method}"`
-                    );
-                    invariant(
-                        payload !== undefined,
-                        `deef->dispatch: no "payload" found in action`
-                    );
-                    historyActionTypes[method](payload);
-                }
-            });
-
-            event.on('start', () => {
-                event.trigger('history', [history.location, history.action]);
-            });
-        });
-    }
 
     // error wrapper
     event.on('error', function(err) {
@@ -74,11 +33,9 @@ export default function (opts = {}) {
         // private properties
         _models: [],
         _store: null,
-        _history: history,
         _event: event,
         // methods
         model,
-        plugin,
         start,
         connect
     };
@@ -95,15 +52,6 @@ export default function (opts = {}) {
      */
     function model(model) {
         this._models.push(checkModel(model));
-    }
-
-    /**
-     * Register a plugin.
-     *
-     * @param reg 注册方法
-     */
-    function plugin(reg) {
-        reg({event});
     }
 
     // inject model dynamically
@@ -181,18 +129,18 @@ export default function (opts = {}) {
         if (container) {
             render(container, store, RootComponent);
             event.trigger('hmr', [render.bind(this, store, container)]);
-            setTimeout(() => event.trigger('start'), 0);
         } else {
             return getProvider(store, RootComponent);
         }
     }
 
-    function getProcessorArgs() {
+    function getProcessorArgs(actionMeta = {}) {
         return {
             getState: app._store.getState,
-            dispatch: (...args) => {
+            dispatch: (action) => {
+                action.meta = {...actionMeta, ...(action.meta || {})};
                 try {
-                    return app._store.dispatch(...args);
+                    return app._store.dispatch(action);
                 } catch(e) {
                     onError(e);
                 }
@@ -201,43 +149,42 @@ export default function (opts = {}) {
         };
     }
 
-    function connect(mapStateToProps, processor, Component, options = undefined) {
-        mapStateToProps = mapStateToProps || ((state, ownProps) => (ownProps));
-        processor = processor || {};
-        return reduxConnect(
-            (state, ownProps) => {
-                const props = mapStateToProps(state, ownProps);
-                invariant(
-                    props.processor === undefined,
-                    'deef->connect: mapStateToProps should not return key "processor"'
-                );
-                return props;
-            },
-            () => {
-                // 订阅只执行一次
-                if (!processor.initialized) {
-                    const _handlers = {};
-                    const _subscriptions = [];
-                    Object.keys(processor).map((key) => {
-                        if (!isNaN(key)) {
-                            _subscriptions.push(processor[key]);
-                        }
-                        else {
-                            _handlers[key] =
-                                (...args) => processor[key].call(processor, getProcessorArgs(), ...args);
-                        }
-                    });
-                    setTimeout(() => {
-                        _subscriptions.forEach(sub => sub.call(processor, getProcessorArgs()))
-                    }, 0);
-                    processor._handlers = _handlers;
-                    processor.initialized = true;
+    function connect(mapStateToProps, processor = {}, ...args) {
+        return Component => reduxConnect(
+            mapStateToProps,
+            (...args) => {
+                if (isPlainObject(processor)) {
+                    // 订阅只执行一次
+                    if (!processor.initialized) {
+                        let _handlers = {};
+                        Object.keys(processor).map((key) => {
+                            if (key === 'subscriptions') {
+                                const subscriptions = processor[key];
+                                invariant(
+                                    isPlainObject(subscriptions) || Array.isArray(subscriptions),
+                                    'deef->connect: subscriptions should be plain object or array'
+                                );
+                                Object.keys(subscriptions).map(sub => subscriptions[sub].call(null, getProcessorArgs({
+                                    _subscriptions: key
+                                })));
+                            }
+                            else {
+                                _handlers[key] = (...args) => processor[key].call(null, getProcessorArgs({
+                                    _handler: key
+                                }), ...args);
+                            }
+                        });
+                        processor._handlers = _handlers;
+                        processor.initialized = true;
+                    }
+                    return processor._handlers;
                 }
-                return {
-                    processor: processor._handlers
-                };
+                if (typeof processor === 'function') {
+                    args[0] = getProcessorArgs().dispatch;
+                    return typeof processor === 'function' && processor(...args);
+                }
             },
-            options
+            ...args
         )(Component);
     }
 
@@ -259,20 +206,16 @@ export default function (opts = {}) {
 
     function checkModel(m) {
         // Clone model to avoid prefixing namespace multiple times
-        const model = { ...m };
-        const { namespace, reducers } = model;
+        const model = {...m};
+        const {namespace, reducers} = model;
 
         invariant(
             namespace,
             'deef->model: namespace should be defined'
         );
-        history && invariant(
-            namespace !== 'history',
-            `deef->model: namespace should not be "history", which is used to change the location`
-        );
         invariant(
             !reducers || isPlainObject(reducers) || Array.isArray(reducers),
-            'deef->model: reducers should be Object or array'
+            'deef->model: reducers should be plain object or array'
         );
         invariant(
             !Array.isArray(reducers) || (isPlainObject(reducers[0]) && typeof reducers[1] === 'function'),
@@ -282,7 +225,7 @@ export default function (opts = {}) {
         function applyNamespace(type) {
             function getNamespacedReducers(reducers) {
                 return Object.keys(reducers).reduce((memo, key) => {
-                    warning(
+                    invariant(
                         key.indexOf(`${namespace}${SEP}`) !== 0,
                         `deef->model: ${type.slice(0, -1)} ${key} should not be prefixed with namespace ${namespace}`
                     );

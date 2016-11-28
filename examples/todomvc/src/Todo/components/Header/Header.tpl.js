@@ -2,8 +2,7 @@
  * Created by Homkai on 2016/11/5.
  */
 import React from 'react';
-export default ({processor, newTodo}) => {
-	const {input, add} = processor;
+export default ({newTodo, onInput, onAdd}) => {
 
 	return (
 		<header className="header">
@@ -13,8 +12,8 @@ export default ({processor, newTodo}) => {
 				autoFocus
 				className="new-todo"
 				placeholder="What needs to be done?"
-				onChange={input}
-				onKeyUp={add}
+				onChange={onInput}
+				onKeyUp={onAdd}
 			/>
 		</header>
 	);

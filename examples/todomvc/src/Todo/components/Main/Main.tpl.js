@@ -2,31 +2,23 @@
  * Created by Homkai on 2016/11/5.
  */
 import React from 'react';
-import app from '../app';
-import TodoItem from './components/TodoItem';
-import HeaderUI from './components/Header';
-import mainProcessor from './processors/main';
-import addTodoProcessor from './processors/addTodo';
+import TodoItem from './TodoItem.tpl';
 import partial from 'lodash/partial';
-import {FILTERS} from '../config';
+import {FILTERS} from '../../../config';
 
-// Header部分只是 添加todo 的功能，与其他部分无关，所以独立出来
-const Header = app.connect(({todo}) => ({newTodo: todo.newTodo}), addTodoProcessor, HeaderUI);
-
-function Main({processor, todoList, editingIndex, filter}) {
-	const {edit, save, remove, toggleAll, clear, toggle} = processor;
+export default ({todoList, editingIndex, filter, description, ...processor}) => {
+	const {onToggleAll, onEdit, onSave, onRemove, onClear, onToggle} = processor;
 	const activeNum = todoList.filter(item => !item.completed).length;
 
 	return (
 		<div>
-			<Header />
 			<section className="main">
 				<input
 					readOnly
 					className="toggle-all"
 					type="checkbox"
 					checked={todoList.length && !activeNum}
-					onClick={!todoList.length ? null : toggleAll}
+					onClick={!todoList.length ? null : onToggleAll}
 				/>
 				<ul className="todo-list">
 					{
@@ -40,11 +32,11 @@ function Main({processor, todoList, editingIndex, filter}) {
 									key={index}
 									todo={item}
 									editing={editingIndex === index}
-									processor={{
-										save,
-										edit: partial(edit, index),
-										remove: partial(remove, index),
-										toggle: partial(toggle, index)
+									{...{
+										onSave,
+										onEdit: partial(onEdit, index),
+										onRemove: partial(onRemove, index),
+										onToggle: partial(onToggle, index)
 									}}
 								/>
 							);
@@ -65,10 +57,10 @@ function Main({processor, todoList, editingIndex, filter}) {
 						<a className={filter === FILTERS.COMPLETED && 'selected'} href="#/completed">Completed</a>
 					</li>
 				</ul>
-				<button className="clear-completed" onClick={clear}>Clear completed</button>
+				<button className="clear-completed" onClick={onClear}>Clear completed</button>
 			</footer>
+			<a href="https://github.com/homkai/deef/">{description}</a>
 		</div>
 	);
-}
+};
 
-export default app.connect(({todo}) => (todo), mainProcessor, Main);
