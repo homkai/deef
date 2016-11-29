@@ -129,7 +129,8 @@ const processor = {
 - stateChange 可以让state和localStorage或者远程的service建立连接
 - hmr 热替换
 
-### app.connect 参见react-redux的connect
+### app.connect 连接model与UI，以支持具体业务
 ```js
 app.connect(mapStateToProps, processor)(Component)
 ```
+*同react-redux的connect*
