@@ -2,7 +2,7 @@
  * Created by Homkai on 2016/11/5.
  */
 import React from 'react';
-import TodoItem from './TodoItem.tpl';
+import TodoItem from './TodoItem.ui';
 import partial from 'lodash/partial';
 import {FILTERS} from '../../../config';
 

@@ -3,7 +3,7 @@
  * Header部分只是 添加todo 的功能，与其他部分无关，所以独立出来
  */
 import {connect} from 'app';
-import Tpl from './Header.tpl';
+import Tpl from './Header.ui';
 
 export default connect(
     ({todo}) => ({

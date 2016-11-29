@@ -2,7 +2,7 @@
  * Created by baidu on 16/11/28.
  */
 import {connect, history} from 'app';
-import Tpl from './Main.tpl';
+import Tpl from './Main.ui';
 import {STORAGE_KEY, LOCATIONS} from  '../../../config';
 
 export default connect(

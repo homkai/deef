@@ -2,26 +2,21 @@
 一个react、redux的简单、纯粹、健壮的框架
 
 ## Concepts
-代码分为model、Component、processor
+代码分为model、UI、connector
 
-model -> Component -> processor -> model -> ...
+model -> (connector) -> UI -> (connector) -> model -> ...
 
-**状态（model）决定展现（Component），交互就是改状态（processor）**
+**状态（model）决定展现（UI），交互就是改状态（connector）**
 
-编码思路很清晰，状态数据放在model，组件是props的纯函数，
-交互处理就是改状态，改状态只能通过dispatch action这个唯一的入口，
-然后由model中的reducers处理，reducers是action和state的纯函数
-（No side effects. No API calls. No mutations.），
-用redux的话说叫状态（state）是可预测的（predictable ）。
-再关键的一点，dispatch一般只写在processor中。
+- model：展现依赖的状态数据（state），及修改状态的方法（reducer）
+- UI：展现组件，输入state和响应交互的callback，输出DOM
+- connector：连接UI和model，取状态（mapStateToProps），处理所有业务交互逻辑——改状态（processor）
 
-这使得代码测试、调试起来很容易：
-我们的model和component逻辑很简单，不容易出错，
-所以更多只需要关心processor中是否正确地响应了某一交互动作，并dispatch了某个action就行
+编码思路很清晰，状态数据state放在model，UI组件是props（state、callback）的纯函数，
+交互就是改状态，统一在connector中响应交互，改状态只能在通过dispatch action这个唯一的入口，
+发出的action由model中的reducers处理，reducers是action和state的纯函数
 
 ## Demo
-
-API很少，看个example就知道怎么用了
 
 ```bash
 $ cd examples/xxx
@@ -39,14 +34,12 @@ import deef from 'deef';
 // 1. Create app
 const app = deef();
 
-// 2. Connect components with model and processor
+// 2. Register models
 const model = {};
-const processor = {};
-const Component = () => {};
-const App = app.connect(mapStateToProps, processor, Component);
-
-// 3. Register models
 app.model(model);
+
+// 3. Connect components with state
+const App = app.connect(mapStateToProps, processor)(Component);
 
 // 4. Start app
 app.start('#root', App);
@@ -58,7 +51,7 @@ app.start('#root', App);
 ### model
 model是最最纯粹的那种model，存数据（state），以及改数据的方法（reducers）
 
-**model处理数据，与具体业务无关**
+**model处理状态数据，与具体业务无关**
 
 ```js
 const model = {
@@ -77,8 +70,8 @@ const model = {
 };
 ```
 
-### Component
-Component 是 无状态函数式组件（stateless functional component），props决定了组件的唯一展现
+### UI
+UI Component 是 无状态函数式组件（stateless functional component），props决定了组件的唯一展现
 
 纯粹到类似N年前的模板引擎doT、mustache
 
@@ -91,8 +84,17 @@ const Component = ({num, onAdd}) => <div>
 <div>;
 ```
 
-### processor
-processor是所有交互的处理器
+### connector
+
+#### mapStateToProps 选取依赖的state
+```js
+const mapStateToProps = (models, ownProps) => {
+    return {
+        num: models.count.num
+    }
+};
+```
+#### processor 所有交互的处理器
 
 鼠标、键盘事件、路由跳转等等，均由processor响应并处理（dispatch一个action，并交由reducers改状态）
 
@@ -107,20 +109,19 @@ const processor = {
     // subscriptions 订阅 只执行一次
     subscriptions: {
         init({dispatch, getState, on}) {
-            // 显示鼓励的时候 再加10分
-            const off = on('action', (action) => {
-                if (action.type === 'count/showEncourage') {
-                    off();
-                    dispatch({type: 'count/setNum', payload: getState().count.num + 10});
+            // 从其他页面回来时重新计数
+            on('action', ({type, payload}) => {
+                if (type === 'app/changeComponent' && payload === 'Count') {
+                    dispatch({type: 'count/init', payload: 0});
                 }
             });
         }
     }
 };
 ```
-*subscriptions是plain object，用于订阅数据、监听键盘事件、路由跳转等等，否则为function，用于组件的事件响应*
+*subscriptions是plain object，用于订阅数据、监听键盘事件、路由跳转等等*
  
-#### on
+##### on
 支持的有
 
 - action 调用dispatch的hook  等同于redux middleware
@@ -128,50 +129,7 @@ const processor = {
 - stateChange 可以让state和localStorage或者远程的service建立连接
 - hmr 热替换
 
-### app.connect
-app.connect(mapStateToProps, processor)(Component)基于react-redux的connect封装
-
-mapStateToProps与react-redux的一致
+### app.connect 参见react-redux的connect
 ```js
-const modelA = {
-    namespace: 'A',
-    state: {
-        x: 'test'
-    }
-};
-const modelB = {
-    namespace: 'B',
-    state: {
-        y: 'test'
-    }
-};
-const mapStateToProps = (state, ownProps) => {
-    return {
-        stateX: state.A.x,
-        stateY: state.B.y
-    }
-}; 
-```
-processor是与当前Component相关的交互处理
-```js
-const countProcessor = {
-    // handlers for component
-    add({dispatch}) {
-        dispatch({type: 'count/add'});
-    }
-};
-const processor = {
-    // 组合processor是非常容易的
-    ...countProcessor,
-    ...commonProcessor
-}
-```
-Component推荐是纯函数式的组件
-```js
-// Component函数的第一个参数就是props，或者stateful Component的this.props
-const Component = ({stateX, stateY, onAdd}) => {
-    return <button onClick={onAdd}>{stateX}{stateY}</button>;
-};
-const App = app.connect(mapStateToProps, processor)(Component);
-// app.connect传入上面的参数，Component的props为{stateX, stateY, onAdd}
+app.connect(mapStateToProps, processor)(Component)
 ```
