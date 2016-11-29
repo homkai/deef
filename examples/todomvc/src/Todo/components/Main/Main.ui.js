@@ -2,7 +2,7 @@
  * Created by Homkai on 2016/11/5.
  */
 import React from 'react';
-import TodoItem from './TodoItem.ui';
+import TodoItemUI from './TodoItem.ui';
 import partial from 'lodash/partial';
 import {FILTERS} from '../../../config';
 
@@ -27,7 +27,7 @@ export default ({todoList, editingIndex, filter, description, ...processor}) => 
 								? item.completed
 								: (filter === FILTERS.COMPLETED ? !item.completed : false);
 							return (
-								<TodoItem
+								<TodoItemUI
 									hidden={hidden}
 									key={index}
 									todo={item}
