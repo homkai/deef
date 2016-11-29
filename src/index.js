@@ -235,7 +235,7 @@ export default function (opts = {}) {
             }
 
             if (model[type]) {
-                if (type === 'reducers' && Array.isArray(model[type])) {
+                if (Array.isArray(model[type])) {
                     model[type][0] = getNamespacedReducers(model[type][0]);
                 } else {
                     model[type] = getNamespacedReducers(model[type]);
