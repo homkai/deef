@@ -14,7 +14,7 @@ model -> (connector) -> UI -> (connector) -> model -> ...
 
 - model：定义展现依赖的状态数据（state）及修改状态的接口（reducer）
 - UI：展现组件，输入state和响应交互的callback，输出DOM
-- connector：为UI注入依赖的状态（getState）及处理所有业务交互（processor），得到一个可以支持具体业务的独立组件
+- connector：为UI注入依赖的状态（getState）及处理所有业务交互（handlers），得到一个可以支持具体业务的独立组件
 
 ## Demo
 
@@ -39,7 +39,7 @@ const model = {};
 app.model(model);
 
 // 3. Connect components with state
-const App = app.connect(getState, processor)(Component);
+const App = app.connect(getState, handlers)(Component);
 
 // 4. Start app
 app.start('#root', App);
@@ -94,15 +94,15 @@ const getState = (models, ownProps) => {
     }
 };
 ```
-#### processor 所有交互的处理器
+#### handlers 所有交互的处理器
 
-鼠标、键盘事件、路由跳转等等，均由processor响应并处理（dispatch一个action，并交由reducers改状态）
+鼠标、键盘事件、路由跳转等等，均由handlers响应并处理（dispatch一个action，并交由reducers改状态）
 
-**processor是plan object——方便组合！方便组合！方便组合！**
+**handlers是plan object——方便组合！方便组合！方便组合！**
 
 ```js
-const processor = {
-    // handlers for component
+const handlers = {
+    // callbacks for component
     onAdd({dispatch}) {
         dispatch({type: 'count/add'});
     },
@@ -120,17 +120,17 @@ const processor = {
 };
 ```
 *subscriptions是plain object，用于订阅数据、监听键盘事件、路由跳转等等*
- 
+
 ##### on
 支持的有
 
 - action 调用dispatch的hook  等同于redux middleware
-- error processor出错的hook
+- error handlers出错的hook
 - stateChange 可以让state和localStorage或者远程的service建立连接
 - hmr 热替换
 *返回off，用来取消on*
 
 ### app.connect 连接model与UI，返回一个支持具体业务的组件
 ```js
-app.connect(getState, processor)(Component)
+app.connect(getState, handlers)(Component)
 ```
