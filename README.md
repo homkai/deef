@@ -2,19 +2,19 @@
 一个react、redux的简单、纯粹、健壮的框架
 
 ## Concepts
+组件化开发：前端页面由若干具备交互处理功能的展现模块组合而成
+
+单向数据流：状态决定展现，交互就是改状态
+
+deef将状态、展现、交互的代码加以约束并更有效地组织起来
+
 代码分为model、UI、connector
 
 model -> (connector) -> UI -> (connector) -> model -> ...
 
-**状态（model）决定展现（UI），交互就是改状态（connector）**
-
-- model：展现依赖的状态数据（state），及修改状态的方法（reducer）
+- model：定义展现依赖的状态数据（state）及修改状态的接口（reducer）
 - UI：展现组件，输入state和响应交互的callback，输出DOM
-- connector：连接UI和model，取状态（mapStateToProps），处理所有业务交互逻辑——改状态（processor）
-
-编码思路很清晰，状态数据state放在model，UI组件是props（state、callback）的纯函数，
-交互就是改状态，统一在connector中响应交互，改状态只能在通过dispatch action这个唯一的入口，
-发出的action由model中的reducers处理，reducers是action和state的纯函数
+- connector：为UI注入依赖的状态（getState）及处理所有业务交互（processor），得到一个可以支持具体业务的独立组件
 
 ## Demo
 
@@ -39,7 +39,7 @@ const model = {};
 app.model(model);
 
 // 3. Connect components with state
-const App = app.connect(mapStateToProps, processor)(Component);
+const App = app.connect(getState, processor)(Component);
 
 // 4. Start app
 app.start('#root', App);
@@ -86,9 +86,9 @@ const Component = ({num, onAdd}) => <div>
 
 ### connector
 
-#### mapStateToProps 选取依赖的state
+#### getState 选取依赖的state
 ```js
-const mapStateToProps = (models, ownProps) => {
+const getState = (models, ownProps) => {
     return {
         num: models.count.num
     }
@@ -128,9 +128,9 @@ const processor = {
 - error processor出错的hook
 - stateChange 可以让state和localStorage或者远程的service建立连接
 - hmr 热替换
+*返回off，用来取消on*
 
-### app.connect 连接model与UI，以支持具体业务
+### app.connect 连接model与UI，返回一个支持具体业务的组件
 ```js
-app.connect(mapStateToProps, processor)(Component)
+app.connect(getState, processor)(Component)
 ```
-*同react-redux的connect*
