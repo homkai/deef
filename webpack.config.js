@@ -1,4 +1,5 @@
 const webpack = require('webpack');
+const InlineEnviromentVariablesPlugin = require('inline-environment-variables-webpack-plugin');
 
 const config = {
     entry: "./src/index.js",
@@ -17,12 +18,16 @@ const config = {
         'react',
         'react-dom'
     ],
-    plugins: []
+    plugins: [
+        new webpack.optimize.OccurenceOrderPlugin()
+    ]
 };
 
-if(process.env.NODE_ENV === 'production') {
+if(true) {//process.env.NODE_ENV === 'production'
+// if(false) {
     config.output.filename = config.output.filename.replace(/^(.+).js$/, '$1.min.js');
     config.devtool = undefined;
+    config.plugins.push(new InlineEnviromentVariablesPlugin({ NODE_ENV: 'production' }, { warnings: false }));
     config.plugins.push(new webpack.optimize.UglifyJsPlugin({
         compress: {
             warnings: false

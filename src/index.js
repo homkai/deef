@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {createStore, applyMiddleware, compose, combineReducers} from 'redux';
-import {Provider, connect as reduxConnect} from 'react-redux';
+import {Provider, connect as hkConnect} from 'react-redux-hk';
 import handleActions from 'redux-actions/lib/handleActions';
 import isPlainObject from 'lodash/isPlainObject';
 import invariant from 'invariant';
@@ -17,6 +17,10 @@ export default function (opts = {}) {
     } = opts;
 
     const event = new Event();
+
+    // 用于保证shallowEqual一致性
+    const __trueState__ = [];
+    const __depState__ = {};
 
     // error wrapper
     event.on('error', function(err) {
@@ -134,7 +138,7 @@ export default function (opts = {}) {
         }
     }
 
-    function getProcessorArgs(actionMeta = {}) {
+    function getHandlerArgs(actionMeta = {}) {
         return {
             getState: app._store.getState,
             dispatch: (action) => {
@@ -149,43 +153,53 @@ export default function (opts = {}) {
         };
     }
 
-    function connect(mapStateToProps, processor = {}, ...args) {
-        return Component => reduxConnect(
-            mapStateToProps,
-            (...args) => {
-                if (isPlainObject(processor)) {
-                    // 订阅只执行一次
-                    if (!processor.initialized) {
-                        let _handlers = {};
-                        Object.keys(processor).map((key) => {
-                            if (key === 'subscriptions') {
-                                const subscriptions = processor[key];
-                                invariant(
-                                    isPlainObject(subscriptions) || Array.isArray(subscriptions),
-                                    'deef->connect: subscriptions should be plain object or array'
-                                );
-                                Object.keys(subscriptions).map(sub => subscriptions[sub].call(null, getProcessorArgs({
-                                    _subscriptions: key
-                                })));
-                            }
-                            else {
-                                _handlers[key] = (...args) => processor[key].call(null, getProcessorArgs({
-                                    _handler: key
-                                }), ...args);
-                            }
-                        });
-                        processor._handlers = _handlers;
-                        processor.initialized = true;
+    // UI依赖的展现状态比较复杂，需要根据model中的状态计算所得时，可以通过getDepState来优化性能
+    function connect(getUIState, handlers = {}, mergeProps = undefined, options = {}) {
+        if (typeof arguments[0] === 'function' && typeof arguments[1] === 'function') {
+            handlers = arguments[2];
+            getUIState = arguments[1];
+            mergeProps = undefined;
+            options = {};
+        }
+        return UI => {
+            return hkConnect(
+                getUIState,
+                (...args) => {
+                    if (isPlainObject(handlers)) {
+                        // 订阅只执行一次
+                        if (!handlers.initialized) {
+                            let _callbacks = {};
+                            Object.keys(handlers).map((key) => {
+                                if (key === 'subscriptions') {
+                                    const subscriptions = handlers[key];
+                                    invariant(
+                                        isPlainObject(subscriptions) || Array.isArray(subscriptions),
+                                        'deef->connect: subscriptions should be plain object or array'
+                                    );
+                                    Object.keys(subscriptions).map(sub => subscriptions[sub].call(null, getHandlerArgs({
+                                        _subscriptions: sub
+                                    })));
+                                }
+                                else {
+                                    _callbacks[key] = (...args) => handlers[key].call(null, getHandlerArgs({
+                                        _callback: key
+                                    }), ...args);
+                                }
+                            });
+                            handlers._callbacks = _callbacks;
+                            handlers.initialized = true;
+                        }
+                        return handlers._callbacks;
                     }
-                    return processor._handlers;
-                }
-                if (typeof processor === 'function') {
-                    args[0] = getProcessorArgs().dispatch;
-                    return typeof processor === 'function' && processor(...args);
-                }
-            },
-            ...args
-        )(Component);
+                    if (typeof handlers === 'function') {
+                        args[0] = getHandlerArgs().dispatch;
+                        return typeof handlers === 'function' && handlers(...args);
+                    }
+                },
+                mergeProps,
+                options
+            )(UI);
+        };
     }
 
 
