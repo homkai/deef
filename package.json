@@ -1,7 +1,8 @@
 {
   "name": "deef",
-  "version": "0.2.3",
+  "version": "0.2.5",
   "description": "React and redux based, simple, pure, sturdy framework.",
+  "main": "./lib/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/homkai/deef"
@@ -26,7 +27,7 @@
   "dependencies": {
     "invariant": "^2.2.1",
     "lodash": "^4.16.5",
-    "react-redux-hk": "0.0.5",
+    "react-redux-hk": "0.0.6",
     "redux": "^3.6.0",
     "redux-actions": "^0.12.0"
   },
@@ -48,10 +49,12 @@
     "webpack": "^1.13.3"
   },
   "scripts": {
+    "build": "babel src --out-dir lib",
     "bundle": "webpack",
     "bundle-min": "NODE_ENV=production webpack"
   },
   "files": [
-    "index.js"
+    "src",
+    "lib"
   ]
 }

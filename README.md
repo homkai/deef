@@ -252,6 +252,9 @@ const handlers = {
 require('feedAds/app').connect(getUIState, handlers)(Component)
 ```
 
+## 性能
+- 基于[react-redux-hk](https://github.com/homkai/react-redux-hk)，自动分析getUIState依赖的state，依赖的state没有改变时，不会重新计算getUIState，不会触发UI的re-render
+
 ## 编码约定
 - model是共享的，UI是可复用的，handler是可组合的，在保证意图完整的情况下，颗粒度尽可能小
 - 组件能独立connect的就独立

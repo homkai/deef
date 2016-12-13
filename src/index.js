@@ -18,10 +18,6 @@ export default function (opts = {}) {
 
     const event = new Event();
 
-    // 用于保证shallowEqual一致性
-    const __trueState__ = [];
-    const __depState__ = {};
-
     // error wrapper
     event.on('error', function(err) {
         throw new Error(err.stack || err);
