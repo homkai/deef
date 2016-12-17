@@ -197,8 +197,6 @@ export default function (opts = {}) {
             )(UI);
         };
     }
-
-
     ////////////////////////////////////
     // Helpers
 

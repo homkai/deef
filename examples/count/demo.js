@@ -1,5 +1,5 @@
 import React from 'react';
-import deef from '../../src/index';
+import deef from 'deef';
 import createHashHistory from  'history/createHashHistory';
 
 const app = deef();
@@ -12,7 +12,10 @@ const countModel = {
     namespace: 'count',
     state: {
         num: 0,
-        encourage: false
+        encourage: {
+            noUse: 'test analyze dep state',
+            show: false
+        }
     },
     reducers: {
         setNum(state, {payload}) {
@@ -34,12 +37,18 @@ const countModel = {
         showEncourage(state) {
             console.log('showEncourage');
             const next = {...state};
-            next.encourage = true;
+            next.encourage = {
+                ...next.encourage,
+                show: true
+            };
             return next;
         },
         hideEncourage(state) {
             const next = {...state};
-            next.encourage = false;
+            next.encourage = {
+                ...next.encourage,
+                show: false
+            };
             return next;
         }
     }
@@ -96,7 +105,7 @@ const countProcessor = {
 };
 
 const Count = app.connect(
-    ({count}) => ({...count}),
+    ({count, app}) => ({num: count.num, encourage: count.encourage.show}),
     countProcessor
 )(CountUI);
 
@@ -158,8 +167,8 @@ const appProcessor = {
 };
 
 const App = app.connect(
-    ({app}) => {
-        return app;
+    ({app, count}) => {
+        return {...app};
     },
     appProcessor
 )(AppUI);
