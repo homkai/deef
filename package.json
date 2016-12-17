@@ -1,6 +1,6 @@
 {
   "name": "deef",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "React and redux based, simple, pure, sturdy framework.",
   "main": "./lib/index.js",
   "repository": {

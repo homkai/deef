@@ -149,54 +149,54 @@ export default function (opts = {}) {
         };
     }
 
-    // UI依赖的展现状态比较复杂，需要根据model中的状态计算所得时，可以通过getDepState来优化性能
-    function connect(getUIState, handlers = {}, mergeProps = undefined, options = {}) {
-        if (typeof arguments[0] === 'function' && typeof arguments[1] === 'function') {
-            handlers = arguments[2];
-            getUIState = arguments[1];
-            mergeProps = undefined;
-            options = {};
-        }
+    // 使用react-redux-hk来优化性能
+    function connect(getUIState, handlers, mergeProps, options = {}) {
+        invariant(
+            typeof getUIState === 'undefined' || typeof getUIState === 'function',
+            'deef->connect: getUIState should be function'
+        );
+        invariant(
+            typeof handlers === 'undefined' || isPlainObject(handlers),
+            'deef->connect: handlers should be plain object'
+        );
+        const mapStateToProps = getUIState;
+        const mapDispatchToProps = !handlers ? undefined : dispatch => {
+            // 订阅只执行一次
+            if (!handlers.initialized) {
+                let callbacks = {};
+                Object.keys(handlers).map((key) => {
+                    if (key === 'subscriptions') {
+                        const subscriptions = handlers[key];
+                        invariant(
+                            isPlainObject(subscriptions) || Array.isArray(subscriptions),
+                            'deef->connect: subscriptions should be plain object or array'
+                        );
+                        Object.keys(subscriptions).map(sub => subscriptions[sub].call(null, getHandlerArgs({
+                            _subscription: sub
+                        })));
+                    }
+                    else {
+                        callbacks[key] = (...args) => handlers[key].call(null, getHandlerArgs({
+                            _callback: key
+                        }), ...args);
+                    }
+                });
+                handlers.callbacks = callbacks;
+                handlers.initialized = true;
+            }
+            return handlers.callbacks;
+        };
         return UI => {
             return hkConnect(
-                getUIState,
-                (...args) => {
-                    if (isPlainObject(handlers)) {
-                        // 订阅只执行一次
-                        if (!handlers.initialized) {
-                            let _callbacks = {};
-                            Object.keys(handlers).map((key) => {
-                                if (key === 'subscriptions') {
-                                    const subscriptions = handlers[key];
-                                    invariant(
-                                        isPlainObject(subscriptions) || Array.isArray(subscriptions),
-                                        'deef->connect: subscriptions should be plain object or array'
-                                    );
-                                    Object.keys(subscriptions).map(sub => subscriptions[sub].call(null, getHandlerArgs({
-                                        _subscriptions: sub
-                                    })));
-                                }
-                                else {
-                                    _callbacks[key] = (...args) => handlers[key].call(null, getHandlerArgs({
-                                        _callback: key
-                                    }), ...args);
-                                }
-                            });
-                            handlers._callbacks = _callbacks;
-                            handlers.initialized = true;
-                        }
-                        return handlers._callbacks;
-                    }
-                    if (typeof handlers === 'function') {
-                        args[0] = getHandlerArgs().dispatch;
-                        return typeof handlers === 'function' && handlers(...args);
-                    }
-                },
+                mapStateToProps,
+                mapDispatchToProps,
                 mergeProps,
                 options
             )(UI);
         };
     }
+
+
     ////////////////////////////////////
     // Helpers
 
