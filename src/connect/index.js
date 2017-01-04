@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import {connect as rrConnect, Provider} from 'react-redux';
+import shallowEqual from 'react-redux/lib/utils/shallowEqual';
 
 const PATH_SEP = '//';
 const DEP_STATE_DEPTH = 2;
@@ -17,30 +18,32 @@ function connect(mapStateToProps, mapDispatchToProps, mergeProps = undefined, op
     const uid = mapStateToProps.toString() + PATH_SEP + Math.random();
     return Component => {
         const mapDepState = !mapStateToProps ? undefined : (state, ownProps) => {
-                let depState = null;
-                // 如果是pureMapState则优先读缓存，避免重复分析depState
-                if (pureMapState && getDepStateCache(uid)) {
-                    depState = {};
-                    Object.keys(getDepStateCache(uid)).forEach(path => (depState[path] = getValueByPath(state, path)));
-                    updateDepStateCache(uid, depState);
-                    __trueState__[uid] = mapStateToProps.bind(null, state, ownProps);
+            let depState = null;
+            // 如果是pureMapState则优先读缓存，避免重复分析depState
+            if (pureMapState && getDepStateCache(uid)) {
+                depState = {};
+                Object.keys(getDepStateCache(uid)).forEach(path => (depState[path] = getValueByPath(state, path)));
+                // 如果新的depState有更新（shallowEqual不一致），则重新分析依赖
+                if (updateDepStateCache(uid, depState)) {
+                    depState = null;
                 }
-                if (!depState) {
-                    const result = analyzeDepState(uid, state, ownProps, mapStateToProps, depStateDepth);
-                    depState = result.depState;
-                    pureMapState = result.cacheable;
-                    __trueState__[uid] = result.stateProps;
-                }
-                const props = {...depState};
-                // __trueState__是个全局变量，引用不变，避开shallowEqual来传component真正需要的props
-                props.__trueState__ = __trueState__;
-                props.__uid__ = uid;
-                const tempList = [...Object.keys(props), '__tempList__'];
-                return {
-                    ...props,
-                    __tempList__: tempList.join(',')
-                };
+            }
+            if (!depState) {
+                const result = analyzeDepState(uid, state, ownProps, mapStateToProps, depStateDepth);
+                depState = result.depState;
+                pureMapState = result.cacheable;
+                __trueState__[uid] = result.stateProps;
+            }
+            const props = {...depState};
+            // __trueState__是个全局变量，引用不变，避开shallowEqual来传component真正需要的props
+            props.__trueState__ = __trueState__;
+            props.__uid__ = uid;
+            const tempList = [...Object.keys(props), '__tempList__'];
+            return {
+                ...props,
+                __tempList__: tempList.join(',')
             };
+        };
         return rrConnect(
             mapDepState,
             mapDispatchToProps,
@@ -135,7 +138,11 @@ function getDepStateCache(uid) {
 }
 
 function updateDepStateCache(uid, depState) {
+    if (shallowEqual(__depCache__[uid + PATH_SEP + 'state'], depState)) {
+        return false;
+    }
     __depCache__[uid + PATH_SEP + 'state'] = {...depState};
+    return true;
 }
 
 function removeDepCache(uid) {

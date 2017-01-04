@@ -1,6 +1,6 @@
 {
   "name": "deef",
-  "version": "0.2.10",
+  "version": "0.2.12",
   "description": "React and redux based, simple, pure, sturdy framework.",
   "main": "./lib/index.js",
   "repository": {
@@ -27,7 +27,7 @@
   "dependencies": {
     "invariant": "^2.2.1",
     "lodash": "^4.16.5",
-    "react-redux-hk": "^0.1.0",
+    "react-redux-hk": "^0.1.2",
     "redux": "^3.6.0",
     "redux-actions": "^0.12.0"
   },
