@@ -1,3 +1,7 @@
+/**
+ * @file deef
+ * @copyright Copyright (c) 2017 Baidu, Inc. All Rights Reserved.
+ */
 import invariant from 'invariant';
 
 class Event {

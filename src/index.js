@@ -1,3 +1,7 @@
+/**
+ * @file deef
+ * @copyright Copyright (c) 2017 Baidu, Inc. All Rights Reserved.
+ */
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {createStore, applyMiddleware, compose, combineReducers} from 'redux';
@@ -126,12 +130,8 @@ export default function (opts = {}) {
         this.model = injectModel.bind(this, createReducer);
 
         // If has container, render; else, return react component
-        if (container) {
-            render(container, store, RootComponent);
-            event.trigger('hmr', [render.bind(this, store, container)]);
-        } else {
-            return getProvider(store, RootComponent);
-        }
+        render(container, store, RootComponent);
+        event.on('hmr', render.bind(this, container, store));
     }
 
     function getHandlerArgs(actionMeta = {}) {
