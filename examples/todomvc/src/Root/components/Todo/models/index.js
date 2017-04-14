@@ -3,4 +3,4 @@
  */
 import todo from './todo';
 
-export default {todo};
+export default [todo];

@@ -2,8 +2,8 @@
  * Created by baidu on 16/11/28.
  */
 import {connect, history} from 'app';
-import UI from './Main.ui';
-import {STORAGE_KEY, LOCATIONS} from  '../../../config';
+import UI from './UI';
+import {LOCATION_FILTER_MAP} from  '../../config';
 
 export default connect(
     ({todo}) => (todo),
@@ -45,40 +45,18 @@ export default connect(
                 type: 'todo/clear'
             });
             // 清空已完成时自动跳转到ALL
-            dispatch({
-                type: 'history/push',
-                payload: '/'
-            });
+            history.push('/Todo');
         },
         subscriptions: {
-            restore({dispatch}) {
-                const stored = localStorage.getItem(STORAGE_KEY);
-                stored && dispatch({
-                    type: 'todo/restore',
-                    payload: JSON.parse(stored)
-                });
-            },
-            route({dispatch, on}) {
+            onHistoryChange({dispatch}) {
+                // 通过订阅history，来提供callback环境
                 history.listen(location => {
-                    const action = LOCATIONS[location.pathname];
-                    action && dispatch(action);
-                });
-            },
-            syncToStorage({on, getState}) {
-                on('stateChange', () => {
-                    const todo = getState().todo;
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(todo));
-                });
-            },
-            testAsync({dispatch}) {
-                fetch('https://api.github.com/repos/homkai/deef')
-                    .then(res => res.json())
-                    .then(json => {
-                        dispatch({
-                            type: 'todo/testAsync',
-                            payload: json.full_name
-                        });
+                    const filter = LOCATION_FILTER_MAP[location.pathname];
+                    filter && dispatch({
+                        type: 'todo/filter',
+                        payload: filter
                     });
+                });
             }
         }
     }

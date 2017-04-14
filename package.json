@@ -1,6 +1,6 @@
 {
   "name": "deef",
-  "version": "0.2.14",
+  "version": "0.3.2",
   "description": "React and redux based, simple, pure, sturdy framework.",
   "main": "./lib/index.js",
   "repository": {
@@ -28,8 +28,7 @@
     "invariant": "^2.2.1",
     "lodash": "^4.16.5",
     "react-redux-hk": "^0.1.5",
-    "redux": "^3.6.0",
-    "redux-actions": "^0.12.0"
+    "redux": "^3.6.0"
   },
   "peerDependencies": {
     "react": "15.x",
@@ -43,10 +42,9 @@
     "babel-preset-react": "^6.16.0",
     "babel-preset-stage-0": "^6.16.0",
     "babel-runtime": "^6.20.0",
-    "inline-environment-variables-webpack-plugin": "^1.1.0",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
-    "webpack": "^1.13.3"
+    "webpack": "^2.3.3"
   },
   "scripts": {
     "build": "babel src --out-dir lib",

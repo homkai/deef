@@ -9,8 +9,6 @@ class Event {
     constructor() {
         this.hooks = {
             error: [],
-            action: [],
-            stateChange: [],
             hmr: []
         };
     }

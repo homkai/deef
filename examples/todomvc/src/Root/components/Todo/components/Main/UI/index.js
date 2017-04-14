@@ -48,13 +48,13 @@ export default ({todoList, editingIndex, filter, description, ...callbacks}) => 
 				<span className="todo-count"><strong>{activeNum}</strong> item left</span>
 				<ul className="filters">
 					<li>
-						<a className={filter === FILTERS.ALL && 'selected'} href="#/">All</a>
+						<a className={filter === FILTERS.ALL && 'selected'} href="#/Todo">All</a>
 					</li>
 					<li>
-						<a className={filter === FILTERS.ACTIVE && 'selected'} href="#/active">Active</a>
+						<a className={filter === FILTERS.ACTIVE && 'selected'} href="#/Todo/active">Active</a>
 					</li>
 					<li>
-						<a className={filter === FILTERS.COMPLETED && 'selected'} href="#/completed">Completed</a>
+						<a className={filter === FILTERS.COMPLETED && 'selected'} href="#/Todo/completed">Completed</a>
 					</li>
 				</ul>
 				<button className="clear-completed" onClick={onClear}>Clear completed</button>

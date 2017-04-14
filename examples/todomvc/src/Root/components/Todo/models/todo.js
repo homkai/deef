@@ -1,7 +1,7 @@
 /**
  * Created by Homkai on 2016/11/5.
  */
-import {FILTERS} from '../../config';
+import {FILTERS} from '../config';
 
 export default {
 	namespace: 'todo',

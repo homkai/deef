@@ -6,7 +6,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import {createStore, applyMiddleware, compose, combineReducers} from 'redux';
 import {Provider, connect as hkConnect} from 'react-redux-hk';
-import handleActions from 'redux-actions/lib/handleActions';
+import handleActions from './handleActions';
 import isPlainObject from 'lodash/isPlainObject';
 import invariant from 'invariant';
 import Event from './event';
@@ -17,7 +17,8 @@ export default function (opts = {}) {
     const {
         initialReducer = {},
         initialState = {},
-        reducerEnhancer = (reducers => reducers)
+        extraMiddlewares = [],
+        extraEnhancers = []
     } = opts;
 
     const event = new Event();
@@ -26,12 +27,6 @@ export default function (opts = {}) {
     event.on('error', function(err) {
         throw new Error(err.stack || err);
     });
-    const onError = (err) => {
-        if (err) {
-            if (typeof err === 'string') err = new Error(err);
-            event.trigger('error', [err]);
-        }
-    };
 
     const app = {
         // private properties
@@ -93,21 +88,16 @@ export default function (opts = {}) {
 
         invariant(!container || isHTMLElement(container), 'deef->start: container should be HTMLElement');
 
-        let reducers = { ...initialReducer };
+        let reducers = {...initialReducer};
         for (let m of this._models) {
             reducers[m.namespace] = getReducer(m.reducers, m.state);
         }
 
-        let middlewares = [
-            api => next => action => {
-                event.trigger('action', [action]);
-                return next(action);
-            }
-        ];
-        const devtools = window.devToolsExtension || (() => noop => noop);
+        const devTools = window.devToolsExtension || (() => noop => noop);
         const enhancers = [
-            applyMiddleware(...middlewares),
-            devtools(),
+            applyMiddleware(...extraMiddlewares),
+            devTools(),
+            ...extraEnhancers
         ];
         const store = this._store = createStore(
             createReducer(),
@@ -116,15 +106,13 @@ export default function (opts = {}) {
         );
 
         function createReducer(additionalReducers = {}) {
-            return reducerEnhancer(combineReducers({
+            return combineReducers({
                 ...reducers,
                 ...additionalReducers
-            }));
+            });
         }
 
         store.additionalReducers = {};
-
-        store.subscribe(() => event.trigger('stateChange'));
 
         // inject model after start
         this.model = injectModel.bind(this, createReducer);
@@ -134,18 +122,20 @@ export default function (opts = {}) {
         event.on('hmr', render.bind(this, container, store));
     }
 
-    function getHandlerArgs(actionMeta = {}) {
-        return {
-            getState: app._store.getState,
-            dispatch: (action) => {
-                action.meta = {...actionMeta, ...(action.meta || {})};
-                try {
-                    return app._store.dispatch(action);
-                } catch(e) {
-                    onError(e);
-                }
-            },
-            on: (...args) => event.on.apply(event, args)
+    function buildHandler(handler, actionMeta = {}) {
+        return (...args) => {
+            try {
+                return handler.call(null, {
+                    getState: app._store.getState,
+                    dispatch: (action) => {
+                        action.meta = {...actionMeta, ...(action.meta || {})};
+                        app._store.dispatch(action);
+                    }
+                }, ...args);
+            }
+            catch (err) {
+                event.trigger('error', [err]);
+            }
         };
     }
 
@@ -171,14 +161,12 @@ export default function (opts = {}) {
                             isPlainObject(subscriptions) || Array.isArray(subscriptions),
                             'deef->connect: subscriptions should be plain object or array'
                         );
-                        Object.keys(subscriptions).map(sub => subscriptions[sub].call(null, getHandlerArgs({
-                            _subscription: sub
-                        })));
+                        Object.keys(subscriptions).map(
+                            sub => buildHandler(subscriptions[sub], {_subscription: sub}).call(null)
+                        );
                     }
                     else {
-                        callbacks[key] = (...args) => handlers[key].call(null, getHandlerArgs({
-                            _callback: key
-                        }), ...args);
+                        callbacks[key] = buildHandler(handlers[key], {_callback: key});
                     }
                 });
                 handlers.callbacks = callbacks;
