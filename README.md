@@ -181,3 +181,6 @@ require('app').connect(selector, handler)(UI)
 
 ## 性能
 - 基于[react-redux-hk](https://github.com/homkai/react-redux-hk)，自动分析getUIState依赖的state，依赖的state没有改变时，不会重新计算getUIState，不会触发UI的re-render
+
+## 使用
+- [百度信息流推广平台](http://feedads.baidu.com)
