@@ -3,23 +3,24 @@
 
 ## Concepts
 - 状态决定展现：model中的状态是组件动态展现的唯一标准，UI组件只需要关注简单的渲染流
-- 交互就是改状态：交互的达成，就是响应一个个用户事件，进而改变model中的状态
+- 交互就是改状态：**交互的达成，就是响应一个个用户事件**，进而改变model中的状态
 - *用户事件：分为如onClick、onChange等UI事件和诸如hashchange等要通过全局订阅的方式提供callback环境的事件*
 
 ## 优势
-- 代码颗粒度小，纯函数，不使用this，复用组合更灵活
-- 相比传统的react class component，deef的概念更少，UI组件就是单纯的渲染逻辑，上手难度更低
+- 代码颗粒度更小，纯函数，不使用this，复用组合更灵活
+- 相比传统的react class component，deef的概念更少，UI组件就是单纯的渲染逻辑（react方面只需要会jsx语法就行），上手难度更低
     - 没有生命周期、组件内部state对数据流、渲染流的干扰，只有model -> selector -> UI -> handler -> model这一条单向数据流，使得编码思路更简单、清晰
     - 纯函数，不使用this，不容易出错，对结果更可控，更方便测试
-    - deef对代码组织有很强的约束作用，各部分代码职责分明，想乱写都不容易，整个团队的编码统一和代码质量更可控。
+    - deef对代码组织有很强的约束作用，分层职责分明，想乱写都不容易，整个团队的编码统一和代码质量更可控
 - 交互响应流->状态数据流->UI渲染流是一一对应的，deef从“响应一个个用户事件”出发，进而抽象成状态及状态流转，表现成UI渲染，这使得将现实问题转为编码实现更符合人的认知，成本更低
-- deef跟redux的思路更相投，更强调整个顶层组件的数据流、渲染流及下层组件之间的跨组件交互，不强调下层组件的实例概念。
+- deef跟redux的思路更相投，更强调整个顶层组件的数据流、渲染流，没有下层组件实例的概念
+- 极大地与react解耦，如果有性能更高的UI渲染库实现，可以很低成本迁移业务代码
 
 ## 代码分层：
 - model：没有this的plain object，定义展现依赖的状态数据（state）及改状态的接口（reducer），只维护状态，不承载业务处理逻辑
 - UI：纯函数组件（stateless functional component）输入state、callbacks的render方法，纯展现组件，不承载业务处理逻辑
 - selector: 纯函数，从model中计算出UI展现依赖的state
-- handler：没有this的plain object，响应一个个用户事件来处理交互，对于UI事件直接定义callback是，对于非UI事件，通过subscriptions订阅的方式提供callback环境
+- handler：没有this的plain object，响应一个个用户事件来处理交互，对于UI事件直接定义callback，对于非UI事件，通过subscriptions订阅的方式提供callback环境
 - *connect：将UI、selector、handler打包得到一个可以支持具体业务的独立组件*
 
 ## Demo
@@ -45,7 +46,7 @@ const model = {};
 app.model(model);
 
 // 3. Connect components with state
-const App = app.connect(getUIState, handlers)(Component);
+const App = app.connect(selector, handler)(UI);
 
 // 4. Start app
 app.start('#root', App);
@@ -57,7 +58,7 @@ app.start('#root', App);
 ### model
 ```js
 const model = {
-	// namespace是区别不同model的唯一标识
+    // namespace是区别不同model的唯一标识
     namespace: 'count',
     // 定义这个model的状态数据
     state: {
@@ -67,8 +68,8 @@ const model = {
     reducers: {
         add(state, action) {
             // reducers里的function是纯函数，输入当前state和action，输出nextState
-			// action是handler里dispatch的，action要求{type: 'modelNamespace/reducerName', payload: xxx}的格式
-			// 比如这里action是{type: 'count/add', payload: 1}
+            // action是handler里dispatch的，action要求{type: 'modelNamespace/reducerName', payload: xxx}的格式
+            // 比如这里action是{type: 'count/add', payload: 1}
             return {
                 ...state,
                 num: state.num + action.payload
@@ -77,12 +78,12 @@ const model = {
     }
 };
 ```
-*在任何地方都不可以通过引用，直接改当前状态：currentState.stateX=1*
+*在任何地方都不可以通过引用直接改当前状态，如state.num=1是不对的*
 
 ### UI
 ```js
 const UI = ({num, tab, ...callbacks}) => {
-	// 第一个参数是外部传入的props，包括展现依赖的state和响应交互的callbacks，要求通过es6解构的方式直观取出依赖的状态，把callbacks放到后面，如果callbacks少的话，就直接摆出来，如果大于两个的话，要求使用"...callbacks"的方式，将callbacks整合，然后再解构这个callbacks。
+    // 第一个参数是外部传入的props，包括展现依赖的state和响应交互的callbacks，要求通过es6解构的方式直观取出依赖的状态，把callbacks放到后面，如果callbacks少的话，就直接摆出来，如果大于两个的话，要求使用"...callbacks"的方式，将callbacks整合，然后再解构这个callbacks。
     const {onAdd, onSwitchTab} = callbacks;
     // 拿到一个UI组件，看前两行就直观知道该UI依赖的所有的state和callbacks。
 
@@ -94,24 +95,22 @@ const UI = ({num, tab, ...callbacks}) => {
 ```
 *UI是纯函数组件（stateless functional component），不可以直接处理交互，通过callbacks暴露出去*
 
-### connect
-
-#### selector 根据model计算UI依赖的state
+### selector 根据model计算UI依赖的state
 ```js
 const selector = (store, ownProps) => {
-	// store是所有model的状态汇聚成的store，是plain object，第一层是model的namespace
-	// ownProps是引用组件时显式传入的props，如<UI stateX="test" />中的stateX
-	// 如果UI依赖的stateX需要根据model里定义的stateY、stateZ等计算所得，且该计算逻辑较为复杂，或者这个计算逻辑是可复用的，需将该逻辑放到Component/common/selector.js
+    // store是所有model的状态汇聚成的store，是plain object，第一层是model的namespace
+    // ownProps是引用组件时显式传入的props，如<UI stateX="test" />中的stateX
+    // 如果UI依赖的stateX需要根据model里定义的stateY、stateZ等计算所得，且该计算逻辑较为复杂，或者这个计算逻辑是可复用的，需将该逻辑放到Component/common/selector.js
     return {
-	    // 要求return一个plain object，会注入到UI的props
+        // 要求return一个plain object，会注入到UI的props
         num: store.count.num,
-		// 可以整合配置里的一些常量进去
+        // 可以整合配置里的一些常量进去
         ...config.VALIDATION_RULES
     }
 };
 ```
 
-#### handler 响应一个个用户事件来处理交互
+### handler 响应一个个用户事件来处理交互
 ```js
 const handler = {
     // callbacks for component，这些callbacks会注入到UI
