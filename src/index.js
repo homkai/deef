@@ -7,9 +7,14 @@ import ReactDOM from 'react-dom';
 import {createStore, applyMiddleware, compose, combineReducers} from 'redux';
 import {Provider, connect as hkConnect} from 'react-redux-hk';
 import handleActions from './handleActions';
-import isPlainObject from 'lodash/isPlainObject';
+import isPlainObject from 'lodash-es/isPlainObject';
+import values from 'lodash-es/values';
 import invariant from 'invariant';
+import window from 'global/window';
+import document from 'global/document';
+
 import Event from './event';
+
 
 const SEP = '/';
 
@@ -78,8 +83,9 @@ export default function (opts = {}) {
      *
      * @param container selector | HTMLElement
      * @param RootComponent Component
+     * @param onRendered rendered callback
      */
-    function start(container, RootComponent) {
+    function start(container, RootComponent, onRendered) {
         // support selector
         if (typeof container === 'string') {
             container = document.querySelector(container);
@@ -93,7 +99,10 @@ export default function (opts = {}) {
             reducers[m.namespace] = getReducer(m.reducers, m.state);
         }
 
-        const devTools = window.devToolsExtension || (() => noop => noop);
+        let devTools = () => noop => noop;
+        if (process.env.NODE_ENV !== 'production' && window.__REDUX_DEVTOOLS_EXTENSION__) {
+            devTools = window.__REDUX_DEVTOOLS_EXTENSION__;
+        }
         const enhancers = [
             applyMiddleware(...extraMiddlewares),
             devTools(),
@@ -118,8 +127,12 @@ export default function (opts = {}) {
         this.model = injectModel.bind(this, createReducer);
 
         // If has container, render; else, return react component
-        render(container, store, RootComponent);
-        event.on('hmr', render.bind(this, container, store));
+        if (container) {
+            render(container, store, RootComponent, onRendered);
+            event.on('hmr', Component => render.call(this, container, store, Component, onRendered));
+        } else {
+            return getProvider(store, RootComponent);
+        }
     }
 
     function buildHandler(handler, actionMeta = {}) {
@@ -146,28 +159,16 @@ export default function (opts = {}) {
             'deef->connect: getUIState should be function'
         );
         invariant(
-            typeof handlers === 'undefined' || isPlainObject(handlers),
-            'deef->connect: handlers should be plain object'
+            typeof handlers === 'undefined'
+                || (isPlainObject(handlers) && values(handlers).every(item => typeof item === 'function')),
+            'deef->connect: handlers should be plain object containing some pure functions'
         );
         const mapStateToProps = getUIState;
-        const mapDispatchToProps = !handlers ? undefined : dispatch => {
-            // 订阅只执行一次
+        const mapDispatchToProps = !handlers ? undefined : () => {
             if (!handlers.initialized) {
                 let callbacks = {};
                 Object.keys(handlers).map((key) => {
-                    if (key === 'subscriptions') {
-                        const subscriptions = handlers[key];
-                        invariant(
-                            isPlainObject(subscriptions) || Array.isArray(subscriptions),
-                            'deef->connect: subscriptions should be plain object or array'
-                        );
-                        Object.keys(subscriptions).map(
-                            sub => buildHandler(subscriptions[sub], {_subscription: sub}).call(null)
-                        );
-                    }
-                    else {
-                        callbacks[key] = buildHandler(handlers[key], {_callback: key});
-                    }
+                    callbacks[key] = buildHandler(handlers[key], {_callback: key});
                 });
                 handlers.callbacks = callbacks;
                 handlers.initialized = true;
@@ -187,7 +188,6 @@ export default function (opts = {}) {
 
     ////////////////////////////////////
     // Helpers
-
     function getProvider(store, RootComponent) {
         return () => (
             <Provider store={store}>
@@ -196,8 +196,12 @@ export default function (opts = {}) {
         );
     }
 
-    function render(container, store, RootComponent) {
-        ReactDOM.render(React.createElement(getProvider(store, RootComponent)), container);
+    function render(container, store, RootComponent, cb) {
+        ReactDOM.render(
+            React.createElement(getProvider(store, RootComponent)),
+            container,
+            cb.bind(null, store)
+        );
     }
 
     function checkModel(m) {
@@ -217,29 +221,29 @@ export default function (opts = {}) {
             !Array.isArray(reducers) || (isPlainObject(reducers[0]) && typeof reducers[1] === 'function'),
             'deef->model: reducers with array should be app.model({ reducers: [object, function] })'
         );
+        invariant(
+            !app._models.some(model => model.namespace === namespace),
+            'app.model: namespace should be unique'
+        );
 
-        function applyNamespace(type) {
-            function getNamespacedReducers(reducers) {
-                return Object.keys(reducers).reduce((memo, key) => {
-                    invariant(
-                        key.indexOf(`${namespace}${SEP}`) !== 0,
-                        `deef->model: ${type.slice(0, -1)} ${key} should not be prefixed with namespace ${namespace}`
-                    );
-                    memo[`${namespace}${SEP}${key}`] = reducers[key];
-                    return memo;
-                }, {});
-            }
-
-            if (model[type]) {
-                if (Array.isArray(model[type])) {
-                    model[type][0] = getNamespacedReducers(model[type][0]);
-                } else {
-                    model[type] = getNamespacedReducers(model[type]);
-                }
-            }
+        function getNamespacedReducers(reducers) {
+            return Object.keys(reducers).reduce((memo, key) => {
+                invariant(
+                    key.indexOf(`${namespace}${SEP}`) !== 0,
+                    `deef->model: reducer ${key} should not be prefixed with namespace ${namespace}`
+                );
+                memo[`${namespace}${SEP}${key}`] = reducers[key];
+                return memo;
+            }, {});
         }
 
-        applyNamespace('reducers');
+        if (model.reducers) {
+            if (Array.isArray(model.reducers)) {
+                model.reducers[0] = getNamespacedReducers(model.reducers[0]);
+            } else {
+                model.reducers = getNamespacedReducers(model.reducers);
+            }
+        }
 
         return model;
     }

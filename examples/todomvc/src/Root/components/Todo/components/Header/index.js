@@ -10,14 +10,14 @@ export default connect(
         newTodo: todo.newTodo
     }),
     {
-        onInput({dispatch}, e) {
+        onInput({dispatch, getSate}, e) {
             const content = e.target.value;
             dispatch({
                 type: 'todo/inputNewTodo',
                 payload: content
             });
         },
-        onAdd({dispatch}, e) {
+        onAdd({dispatch, getSate}, e) {
             const content = e.target.value.trim();
             if (e.keyCode === 13 && content) {
                 dispatch({

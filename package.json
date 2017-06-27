@@ -1,6 +1,6 @@
 {
   "name": "deef",
-  "version": "0.3.2",
+  "version": "0.4.1",
   "description": "React and redux based, simple, pure, sturdy framework.",
   "main": "./lib/index.js",
   "repository": {
@@ -25,10 +25,11 @@
     "url": "https://github.com/homkai/deef/issues"
   },
   "dependencies": {
+    "global": "^4.3.2",
     "invariant": "^2.2.1",
-    "lodash": "^4.16.5",
-    "react-redux-hk": "^0.1.5",
-    "redux": "^3.6.0"
+    "lodash-es": "^4.17.4",
+    "react-redux-hk": "^0.1.6",
+    "redux": "^3.7.1"
   },
   "peerDependencies": {
     "react": "15.x",

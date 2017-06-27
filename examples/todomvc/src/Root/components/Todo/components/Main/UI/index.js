@@ -2,12 +2,14 @@
  * Created by Homkai on 2016/11/5.
  */
 import React from 'react';
-import TodoItemUI from './TodoItem.ui';
 import partial from 'lodash/partial';
+import classNames from 'classnames';
+
+import TodoItemUI from './TodoItem.ui';
 import {FILTERS} from '../../../config';
 
 export default ({todoList, editingIndex, filter, description, ...callbacks}) => {
-	const {onToggleAll, onEdit, onSave, onRemove, onClear, onToggle} = callbacks;
+	const {onToggleAll, onEdit, onSave, onRemove, onClear, onToggle, onFilter} = callbacks;
 	const activeNum = todoList.filter(item => !item.completed).length;
 
 	return (
@@ -48,13 +50,25 @@ export default ({todoList, editingIndex, filter, description, ...callbacks}) => 
 				<span className="todo-count"><strong>{activeNum}</strong> item left</span>
 				<ul className="filters">
 					<li>
-						<a className={filter === FILTERS.ALL && 'selected'} href="#/Todo">All</a>
+						<a
+                            href="javascript:;"
+                            className={classNames({selected: filter === FILTERS.ALL})}
+                            onClick={_.partial(onFilter, 'all')}
+                        >All</a>
 					</li>
 					<li>
-						<a className={filter === FILTERS.ACTIVE && 'selected'} href="#/Todo/active">Active</a>
+                        <a
+                            href="javascript:;"
+                            className={classNames({selected: filter === FILTERS.ACTIVE})}
+                            onClick={_.partial(onFilter, 'active')}
+                        >Active</a>
 					</li>
 					<li>
-						<a className={filter === FILTERS.COMPLETED && 'selected'} href="#/Todo/completed">Completed</a>
+                        <a
+                            href="javascript:;"
+                            className={classNames({selected: filter === FILTERS.COMPLETED})}
+                            onClick={_.partial(onFilter, 'completed')}
+                        >Completed</a>
 					</li>
 				</ul>
 				<button className="clear-completed" onClick={onClear}>Clear completed</button>

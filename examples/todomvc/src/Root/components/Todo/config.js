@@ -8,8 +8,8 @@ export const FILTERS = {
 };
 
 export const LOCATION_FILTER_MAP = {
-	'/Todo': FILTERS.ALL,
-	'/Todo/active': FILTERS.ACTIVE,
-	'/Todo/completed': FILTERS.COMPLETED
+	'all': FILTERS.ALL,
+	'active': FILTERS.ACTIVE,
+	'completed': FILTERS.COMPLETED
 };
 

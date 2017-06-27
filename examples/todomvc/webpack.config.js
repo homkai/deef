@@ -6,7 +6,7 @@ module.exports = {
         path: __dirname,
         filename: "bundle.js"
     },
-    devtool: '#inline-source-map',
+    devtool: 'inline-source-map',
     resolve: {
         alias: {
             app: path.resolve(__dirname, './src/app')
