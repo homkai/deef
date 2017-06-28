@@ -2,7 +2,7 @@
  * Created by baidu on 17/6/27.
  */
 import {history} from 'app';
-import {isPlainObject, pick, isEqual} from 'lodash';
+
 import matchPath from './matchPath';
 
 const on = (rule, {onEnter, onLeave}) => {
@@ -33,8 +33,5 @@ function matchRule(rule, location) {
     }
     if (typeof rule === 'function') {
         return rule(location);
-    }
-    if (isPlainObject(rule)) {
-        return isEqual(rule, pick(location, Object.keys(rule)));
     }
 }
