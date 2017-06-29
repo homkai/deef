@@ -26,7 +26,7 @@ const on = (rule, {onEnter, onLeave, key}) => {
     onChange(history.location);
     function onChange(location) {
         const match = matchRule(location, rule);
-        const matchLog = getMatchInfo(match);
+        const matchLog = getMatchLog(match);
         if (match && !isEqual(lastMatchLog, matchLog)) {
             onEnter && onEnter(match);
             lastMatchLog = matchLog;
@@ -52,6 +52,6 @@ function matchRule(location, rule) {
     }
 }
 
-function getMatchInfo(match) {
+function getMatchLog(match) {
     return match ? pick(match, ['path', 'params', 'url']) : null;
 }
