@@ -1,7 +1,7 @@
 /**
  * Created by baidu on 17/6/26.
  */
-import {router} from 'app';
+import {router, history} from 'app';
 import once from 'lodash/once';
 
 import {init as Todo} from '../components/Todo/common/handler';
@@ -12,15 +12,16 @@ const enterPage = {
     Test
 };
 
-const route = once(({dispatch, getState}) => {
+export const init = ({dispatch, getState}) => {
+    router.on({path: '/', exact: true}, {
+        onEnter() {
+            history.replace('/Todo');
+        }
+    });
     router.on('/:page', {
-        onEnter(noop, {params: {page}}) {
+        onEnter({params: {page}}) {
             const init = enterPage[page];
             init && init({dispatch, getState});
         }
     });
-});
-
-export const init = ({dispatch, getState}) => {
-    route({dispatch, getState});
 };

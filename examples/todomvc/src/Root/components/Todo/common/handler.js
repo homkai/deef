@@ -1,13 +1,17 @@
 /**
  * Created by baidu on 17/4/12.
  */
-import {router} from 'app';
-import once from 'lodash/once';
+import {router, history} from 'app';
 
 import {LOCATION_FILTER_MAP} from '../config';
-const route = once(({dispatch, getState}) => {
-    router.on('/Todo/:filter', {
-        onEnter(noop, {params: {filter}}) {
+
+
+const route = ({dispatch, getState}) => {
+    router.on('/Todo/:filter?', {
+        onEnter({params: {filter}}) {
+            if (!filter) {
+                return history.replace('/Todo/all');
+            }
             const filterType = LOCATION_FILTER_MAP[filter];
             filterType && dispatch({
                 type: 'todo/filter',
@@ -15,7 +19,7 @@ const route = once(({dispatch, getState}) => {
             });
         }
     });
-});
+};
 
 const fetchDemo = ({dispatch, getState}) => {
     fetch('https://api.github.com/repos/homkai/deef')
@@ -34,6 +38,7 @@ export function init({dispatch, getState}) {
         type: 'app/changePage',
         payload: 'Todo'
     });
+
     route({dispatch, getState});
     fetchDemo({dispatch, getState});
 }

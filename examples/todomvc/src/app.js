@@ -3,7 +3,7 @@
  */
 import deef from 'deef';
 import createHashHistory from 'history/createHashHistory';
-import _router from './tools/router';
+import _router from './utils/router';
 
 export const app = deef();
 export const connect = app.connect;
