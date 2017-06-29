@@ -2,7 +2,6 @@
  * Created by baidu on 17/6/26.
  */
 import {router, history} from 'app';
-import once from 'lodash/once';
 
 import {init as Todo} from '../components/Todo/common/handler';
 import {init as Test} from '../components/Test/common/handler';
