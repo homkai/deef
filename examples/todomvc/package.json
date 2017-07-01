@@ -3,9 +3,9 @@
   "dependencies": {
     "classnames": "^2.2.5",
     "deef": "^0.4.1",
+    "deef-router": "0.0.1",
     "history": "^4.4.1",
     "lodash": "^4.16.6",
-    "path-to-regexp": "^1.7.0",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
     "whatwg-fetch": "^2.0.1"

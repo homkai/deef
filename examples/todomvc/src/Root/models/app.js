@@ -4,13 +4,13 @@
 export default {
     namespace: 'app',
     state: {
-        page: ''
+        module: ''
     },
     reducers: {
-        changePage(state, {payload: page}) {
+        changeModule(state, {payload: module}) {
             return {
                 ...state,
-                page
+                module
             };
         }
     }

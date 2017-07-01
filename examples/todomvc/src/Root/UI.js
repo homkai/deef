@@ -8,8 +8,8 @@ import _ from 'lodash';
 
 const moduleMap = {Todo, Test};
 
-export default ({page, onGoModule}) => {
-    const Module = moduleMap[page];
+export default ({module, onGoModule}) => {
+    const Module = moduleMap[module];
 
     return <main>
         <nav>
