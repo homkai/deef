@@ -9,33 +9,53 @@ import pick from 'lodash/pick';
 
 import matchPath from './matchPath';
 
-const ruleCache = [];
+const ruleList = [];
 
-const on = (rule, {onEnter, onLeave, key}) => {
+const on = (rule, {onMatch, onMiss, key}) => {
+    // 一个rule只生效一次
     const ruleKey = isString(rule) ? rule : (rule.path && JSON.stringify(rule) || (isString(key) ? key : ''));
     if (!ruleKey) {
-        throw new Error('When rule is not string must declare a globally unique `key` prop in the 2nd param');
+        throw new Error('When (rule || rule.path) is not string must declare a globally unique `key` prop in the 2nd param');
     }
-    if (~ruleCache.indexOf(ruleKey)) {
+    if (ruleList.some(item => item.ruleKey === ruleKey)) {
         return;
     }
-    ruleCache.push(ruleKey);
 
-    let lastMatchLog = null;
-    history.listen(onChange);
-    onChange(history.location);
-    function onChange(location) {
-        const match = matchRule(location, rule);
-        const matchLog = getMatchLog(match);
-        if (match && !isEqual(lastMatchLog, matchLog)) {
-            onEnter && onEnter(match);
-            lastMatchLog = matchLog;
-        }
-        else if (!match && lastMatchLog !== null) {
-            onLeave && onLeave();
-            lastMatchLog = null;
-        }
-        (lastMatchLog !== null) && (lastMatchLog = matchLog);
+    // 放到ruleList，并立即触发匹配
+    ruleList.push({
+        rule,
+        ruleKey,
+        callbacks: {onMatch, onMiss}
+    });
+    onHistoryChange(history.location);
+
+    // 只建立一次history.listen
+    ruleList.length === 1 && history.listen(onHistoryChange);
+
+    // 监听history change
+    function onHistoryChange(location) {
+        const execList = [];
+        ruleList.forEach(item => {
+            const {rule, callbacks: {onMatch, onMiss}} = item;
+            const match = matchRule(location, rule);
+            if (match && !isEqual(pick(item.lastMatch, ['path', 'params', 'url']), pick(match, ['path', 'params', 'url']))) {
+                onMatch && execList.push({ruleKey, onMatch: onMatch.bind(null, match, item.lastMatch)});
+                item.lastMatch = match;
+            }
+            else if (!match && item.lastMatch !== null) {
+                onMiss && execList.push({ruleKey, onMiss: onMiss.bind(null, item.lastMatch)});
+                item.lastMatch = null;
+            }
+            (item.lastMatch !== null) && (item.lastMatch = match);
+        });
+        // 先执行onMiss，执行顺序按注册顺序从后到早
+        execList.reverse().forEach(item => {
+            item.onMiss && item.onMiss();
+        });
+        // 再执行onMatch
+        execList.forEach(item => {
+            item.onMatch && item.onMatch();
+        });
     }
 };
 
@@ -50,8 +70,4 @@ function matchRule(location, rule) {
     if (isFunction(rule)) {
         return rule(location);
     }
-}
-
-function getMatchLog(match) {
-    return match ? pick(match, ['path', 'params', 'url']) : null;
 }

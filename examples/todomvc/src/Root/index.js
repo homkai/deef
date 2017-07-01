@@ -7,7 +7,7 @@ import UI from './UI';
 export default connect(
     ({app}) => app,
     {
-        onGoPage({dispatch, getState}, page) {
+        onGoModule({dispatch, getState}, page) {
             history.push(`/${page}`);
         }
     }
