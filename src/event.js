@@ -4,13 +4,13 @@
  */
 import invariant from 'invariant';
 
+const eventTypeList = ['error', 'hmr', 'injectCallback'];
+
 class Event {
 
     constructor() {
-        this.hooks = {
-            error: [],
-            hmr: []
-        };
+        this.hooks = {};
+        eventTypeList.forEach(event => this.hooks[event] = []);
     }
 
     on(type, handler) {

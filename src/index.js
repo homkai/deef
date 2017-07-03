@@ -153,27 +153,30 @@ export default function (opts = {}) {
     }
 
     // 使用react-redux-hk来优化性能
-    function connect(getUIState, handlers, mergeProps, options = {}) {
+    function connect(getUIState, callbacks, mergeProps, options = {}) {
         invariant(
             typeof getUIState === 'undefined' || typeof getUIState === 'function',
             'deef->connect: getUIState should be function'
         );
-        invariant(
-            typeof handlers === 'undefined'
-                || (isPlainObject(handlers) && values(handlers).every(item => typeof item === 'function')),
-            'deef->connect: handlers should be plain object containing some pure functions'
-        );
         const mapStateToProps = getUIState;
-        const mapDispatchToProps = !handlers ? undefined : () => {
-            if (!handlers.initialized) {
-                let callbacks = {};
-                Object.keys(handlers).map((key) => {
-                    callbacks[key] = buildHandler(handlers[key], {_callback: key});
+        const mapDispatchToProps = !callbacks ? undefined : () => {
+            if (!callbacks.initializedCallbacks) {
+                invariant(
+                    isPlainObject(callbacks),
+                    'deef->connect: callbacks should be plain object'
+                );
+                let initializedCallbacks = {};
+                Object.keys(callbacks).map((key) => {
+                    invariant(
+                        typeof callbacks[key] === 'function',
+                        'deef->connect: callbacks\'s each item should be function, but found ' + key
+                    );
+                    event.trigger('injectCallback', [key, callbacks[key]]);
+                    initializedCallbacks[key] = buildHandler(callbacks[key], {_callback: key});
                 });
-                handlers.callbacks = callbacks;
-                handlers.initialized = true;
+                callbacks.initializedCallbacks = initializedCallbacks;
             }
-            return handlers.callbacks;
+            return callbacks.initializedCallbacks;
         };
         return UI => {
             return hkConnect(
