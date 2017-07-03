@@ -53,21 +53,21 @@ export default ({todoList, editingIndex, filter, description, ...callbacks}) => 
 						<a
                             href="javascript:;"
                             className={classNames({selected: filter === FILTERS.ALL})}
-                            onClick={_.partial(onFilter, 'all')}
+                            onClick={partial(onFilter, 'all')}
                         >All</a>
 					</li>
 					<li>
                         <a
                             href="javascript:;"
                             className={classNames({selected: filter === FILTERS.ACTIVE})}
-                            onClick={_.partial(onFilter, 'active')}
+                            onClick={partial(onFilter, 'active')}
                         >Active</a>
 					</li>
 					<li>
                         <a
                             href="javascript:;"
                             className={classNames({selected: filter === FILTERS.COMPLETED})}
-                            onClick={_.partial(onFilter, 'completed')}
+                            onClick={partial(onFilter, 'completed')}
                         >Completed</a>
 					</li>
 				</ul>
