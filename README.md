@@ -163,5 +163,8 @@ require('app').connect(getUIState, callbacks)(UI)
 - deef跟redux的思路更相投，更强调整个顶层组件的数据流、渲染流，没有下层组件实例的概念
 - 极大地与react解耦，如果有性能更高的UI渲染库实现，可以很低成本迁移业务代码
 
+## 配套
+- [deef-router](https://github.com/homkai/deef-router)，参考examples/todomvc
+
 ## 使用
 - [百度信息流推广平台](http://feedads.baidu.com)
