@@ -19,8 +19,23 @@ export const init = ({dispatch, getState}) => {
             history.replace('/Todo');
         }
     });
+    router.on({
+        pathname: '/TodoEntry',
+        search: '?form=Test'
+    }, {
+        onMatch() {
+            console.log('Enter Todo from Test');
+            history.replace('/Todo');
+        }
+    });
     router.on('/:module', {
         onMatch({params: {module}}) {
+            const init = enterModule[module];
+
+            if (!init) {
+                return;
+            }
+
             // 如下代码无业务意义——帮助理解deef-router START
             if (!arguments[1]) {
                 console.log('First time enter module, matchInfo', arguments[0]);
@@ -31,7 +46,6 @@ export const init = ({dispatch, getState}) => {
             }
             // 帮助理解deef-router END
 
-            const init = enterModule[module];
             init && init({dispatch, getState});
         }
     });

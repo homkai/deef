@@ -43,7 +43,7 @@ function route({dispatch, getState}) {
                 payload: filterType
             });
         },
-        onMiss() {
+        onBreakMatch() {
             console.log('Leave Todo module, lastMatchInfo', arguments[0]);
         }
     });

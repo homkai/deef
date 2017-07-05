@@ -15,7 +15,9 @@ export default ({module, onGoModule}) => {
         <nav>
             <ul>
                 <li>
-                    <button onClick={partial(onGoModule, 'Todo')}>去Todo模块</button>
+                    <button onClick={partial(onGoModule, (module === 'Test' ? 'TodoEntry?form=Test' : 'Todo'))}>
+                        去Todo模块
+                    </button>
                 </li>
                 <li>
                     <button onClick={partial(onGoModule, 'Test')}>去Test模块</button>
