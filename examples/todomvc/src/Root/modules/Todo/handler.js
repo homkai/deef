@@ -18,7 +18,7 @@ export function init({dispatch, getState}) {
 }
 
 function route({dispatch, getState}) {
-    router.on('/Todo/:filter?', {
+    router.register('/Todo/:filter?', {
         onMatch({params: {filter}}, [lastMatchInfo = {}]) {
             // 如下代码无业务意义——帮助理解deef-router START
             if (!arguments[1]) {

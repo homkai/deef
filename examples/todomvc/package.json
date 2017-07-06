@@ -3,7 +3,7 @@
   "dependencies": {
     "classnames": "^2.2.5",
     "deef": "^0.4.2",
-    "deef-router": "0.1.0",
+    "deef-router": "^0.1.5",
     "history": "^4.4.1",
     "lodash": "^4.16.6",
     "react": "^15.3.2",

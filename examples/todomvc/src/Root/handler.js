@@ -12,14 +12,14 @@ const enterModule = {
 };
 
 export const init = ({dispatch, getState}) => {
-    router.on({path: '/', exact: true}, {
+    router.register({path: '/', exact: true}, {
         onMatch() {
             // redirect到默认模块
             console.log('Redirect to default module', arguments[0]);
             history.replace('/Todo');
         }
     });
-    router.on({
+    router.register({
         pathname: '/TodoEntry',
         search: '?form=Test'
     }, {
@@ -28,7 +28,7 @@ export const init = ({dispatch, getState}) => {
             history.replace('/Todo');
         }
     });
-    router.on('/:module', {
+    router.register('/:module', {
         onMatch({params: {module}}, [lastMatchInfo = {}]) {
             const init = enterModule[module];
 
