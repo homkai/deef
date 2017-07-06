@@ -29,7 +29,7 @@ export const init = ({dispatch, getState}) => {
         }
     });
     router.on('/:module', {
-        onMatch({params: {module}}) {
+        onMatch({params: {module}}, [lastMatchInfo = {}]) {
             const init = enterModule[module];
 
             if (!init) {
@@ -42,7 +42,7 @@ export const init = ({dispatch, getState}) => {
             }
             else {
                 console.log('Switch module, matchInfo', arguments[0]);
-                console.log('Switch module, lastMathInfo', arguments[1]);
+                console.log('Switch module, lastMathInfo', lastMatchInfo);
             }
             // 帮助理解deef-router END
 

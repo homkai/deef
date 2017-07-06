@@ -19,7 +19,7 @@ export function init({dispatch, getState}) {
 
 function route({dispatch, getState}) {
     router.on('/Todo/:filter?', {
-        onMatch({params: {filter}}) {
+        onMatch({params: {filter}}, [lastMatchInfo = {}]) {
             // 如下代码无业务意义——帮助理解deef-router START
             if (!arguments[1]) {
                 // onMatch注入两个参数(matchInfo, lastMatchInfo)：本次命中rule的match信息，和上次命中rule时的match信息
@@ -29,7 +29,7 @@ function route({dispatch, getState}) {
             else {
                 // 如有上次命中的信息则意味着是上次也是命中了本rule，即统一rule不同params的switch
                 console.log('In Todo module switch filter, matchInfo', arguments[0].params);
-                console.log('In Todo module switch filter, lastMatchInfo', arguments[1].params);
+                console.log('In Todo module switch filter, lastMatchInfo', lastMatchInfo.params);
             }
             // 帮助理解deef-router END
 
@@ -43,8 +43,8 @@ function route({dispatch, getState}) {
                 payload: filterType
             });
         },
-        onBreakMatch() {
-            console.log('Leave Todo module, lastMatchInfo', arguments[0]);
+        onBreakMatch([lastMatchInfo]) {
+            console.log('Leave Todo module, lastMatchInfo', lastMatchInfo);
         }
     });
 }
