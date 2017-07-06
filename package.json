@@ -54,6 +54,7 @@
   },
   "files": [
     "src",
-    "lib"
+    "lib",
+    "README.md"
   ]
 }
