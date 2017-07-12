@@ -4,7 +4,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Test from './modules/Test';
-import partial from 'lodash/partial';
 import {Layout, Menu, Breadcrumb, Icon} from 'antd';
 const {SubMenu} = Menu;
 const {Header, Content, Sider} = Layout;
@@ -21,7 +20,7 @@ const UI = ({module, onGoModule}) => {
                     mode="horizontal"
                     defaultSelectedKeys={[module]}
                     style={{ lineHeight: '64px' }}
-                    onClick={({item, key, keyPath}) => onGoModule(item, key, keyPath)}
+                    onClick={onGoModule}
                 >
                     <Menu.Item key="Test">Test</Menu.Item>
                     <Menu.Item key="nav2">nav 2</Menu.Item>
@@ -35,7 +34,7 @@ const UI = ({module, onGoModule}) => {
                         defaultSelectedKeys={['1']}
                         defaultOpenKeys={['sub1']}
                         style={{ height: '100%', borderRight: 0 }}
-                        onClick={({item, key, keyPath}) => onGoModule(item, key, keyPath)}
+                        onClick={onGoModule}
                     >
                         <SubMenu key="sub1" title={<span><Icon type="user" />subnav 1</span>}>
                             <Menu.Item key="Todo">Todo</Menu.Item>

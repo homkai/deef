@@ -28,8 +28,8 @@ export default connect(
                 payload: selectedRowKeys
             });
         },
-        onPanelChange({dispatch, getState}, value, mode){
-            console.log(value, mode);
+        onPanelChange({dispatch, getState}, {mode, data}){
+            console.log(data, mode);
         },
         onCascaderChange({dispatch, getState}, value){
             console.log(value);
@@ -38,13 +38,23 @@ export default connect(
             console.log(key);
         },
         onDecline ({dispatch, getState}){
+            let percent = getState().test.progressData.percent - 10;
+            if (percent < 0) {
+                percent = 0;
+            }
             dispatch({
-                type: "test/decline"
+                type: "test/decline",
+                payload: percent
             });
         },
         onIncrease ({dispatch, getState}){
+            let percent = getState().test.progressData.percent + 10;
+            if (percent > 100) {
+                percent = 100;
+            }
             dispatch({
-                type: "test/increase"
+                type: "test/increase",
+                payload: percent
             });
         },
     }

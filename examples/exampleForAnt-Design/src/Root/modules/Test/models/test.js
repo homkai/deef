@@ -74,9 +74,9 @@ export default {
             }
         },
         showTableLoading(state) {
-            const tmp  = state.tableData;
+            const tableDataDetail  = state.tableData;
             const tableData = {
-                ...tmp,
+                ...tableDataDetail,
                 loading: true
             }
             return {
@@ -85,9 +85,9 @@ export default {
             }
         },
         hideTableLoading(state) {
-            const tmp  = state.tableData;
+            const tableDataDetail  = state.tableData;
             const tableData = {
-                ...tmp,
+                ...tableDataDetail,
                 loading: false
             }
             return {
@@ -96,14 +96,14 @@ export default {
             }
         },
         setSelectedRowKeys(state, {payload: selected}){
-            const tmp  = state.tableData;
-            const tmp1 = tmp.rowSelection;
+            const tableDataDetail  = state.tableData;
+            const rowSelectionDetail = tableDataDetail.rowSelection;
             const rowSelection = {
-                ...tmp1,
+                ...rowSelectionDetail,
                 selectedRowKeys: selected
             }
             const tableData = {
-                ...tmp,
+                ...tableDataDetail,
                 rowSelection,
             }
             return {
@@ -111,29 +111,21 @@ export default {
                 tableData
             }
         },
-        increase(state) {
-            const tmp = state.progressData;
-            let percent = tmp.percent + 10;
-            if (percent > 100) {
-                percent = 100;
-            }
+        increase(state, {payload: percent}) {
+            const progressDataDetail = state.progressData;
             const progressData = {
-                ...tmp,
+                ...progressDataDetail,
                 percent
-            }            
+            }
             return{
                 ...state,
                 progressData
             }
         },
-        decline(state){
-            const tmp = state.progressData;
-            let percent = tmp.percent - 10;
-            if (percent < 0) {
-                percent = 0;
-            }
+        decline(state, {payload: percent}){
+            const progressDataDetail = state.progressData;
             const progressData = {
-                ...tmp,
+                ...progressDataDetail,
                 percent
             }
             return{

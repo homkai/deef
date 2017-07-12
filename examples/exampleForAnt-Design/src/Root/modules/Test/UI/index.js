@@ -6,10 +6,10 @@ import partial from 'lodash/partial';
 import '../style.less';
 import {Spin, Row, Col, Card} from 'antd';
 import {Cascader, Progress} from 'antd';
-import {default as TableUI} from './Table.ui';
-import {default as CalendarUI} from './Calendar.ui';
-import {default as CollapseUI} from './Collapse.ui';
-import {default as ProgressControllableUI} from './ProgressControllable.ui';
+import TableUI from './Table.ui';
+import CalendarUI from './Calendar.ui';
+import CollapseUI from './Collapse.ui';
+import ProgressControllableUI from './ProgressControllable.ui';
 
 export default ({isLoading, tableData, cascaderData, collapseData, progressData, ...callbacks}) => {
     const {rowSelection, columns, data, loading} = tableData;

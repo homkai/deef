@@ -11,7 +11,7 @@ export default ({onPanelChange}) => {
         >
             <Calendar
                 fullscreen={false}
-                onPanelChange={(value, mode) => onPanelChange(value, mode)}
+                onPanelChange={(data, mode) => onPanelChange({data, mode})}
             />
         </div>
     );
