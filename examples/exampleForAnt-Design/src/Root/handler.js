@@ -2,12 +2,8 @@
  * Created by DOCer 17/7/11.
  */
 import {router, history} from 'app';
-
-import {init as Todo} from './modules/Todo/handler';
 import {init as Test} from './modules/Test/handler';
-
 const enterModule = {
-    Todo,
     Test
 };
 
