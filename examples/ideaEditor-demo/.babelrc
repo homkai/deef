@@ -7,7 +7,8 @@
           "chrome": 45,
           "ie": 10
         },
-        "modules": "umd"
+        "modules": false,
+        "exclude": ["transform-regenerator"]
       }
     ]
   ],

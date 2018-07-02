@@ -1,26 +1,26 @@
 import invariant from 'invariant';
 
+const eventTypeList = [
+    'error', 'hmr', 'injectCallback', 'beforeCallback', 'beforeDispatch', 'afterDispatch', 'afterCallback'
+];
+
 class Event {
 
     constructor() {
-        this.hooks = {
-            error: [],
-            stateChange: [],
-            action: [],
-            hmr: []
-        };
+        this.hooks = {};
+        eventTypeList.forEach(event => this.hooks[event] = []);
     }
 
     on(type, handler) {
         const hooks = this.hooks;
-        invariant(hooks[type], `app.hooks: unknown hook type: ${type}`);
+        invariant(hooks[type], `deef->on: unknown hook type: ${type}`);
         const fns = hooks[type];
         fns.push(handler);
         return this.off.bind(this, type, handler);
     }
 
     off(type, handler) {
-        this.hooks[type] = this.hooks[type].filter(fn => fn !== handler);
+        this.hooks[type] = handler ? this.hooks[type].filter(fn => fn !== handler) : [];
     }
 
     trigger(type, args) {
